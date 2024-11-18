@@ -1,0 +1,27 @@
+{{- if .Values.common.ns.enabled }}
+{{- if .Values.common.sa.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.domainCode }}-sa
+  namespace: {{ include "ddd-helm.namespace" . }}
+  labels:
+    {{- include "ddd-helm.commonLabels" . | nindent 4 }}
+    {{- if .Values.common.sa.labelsTemplate }}
+    {{- tpl .Values.common.sa.labelsTemplate . | nindent 4 }}
+    {{- end }}
+    {{- if .Values.common.sa.labels }}
+    {{- toYaml .Values.common.sa.labels . | nindent 4 }}
+    {{- end }}
+  {{- if or .Values.common.sa.annotationsTemplate .Values.common.sa.annotations }}
+  annotations:
+    {{- if .Values.common.sa.annotationsTemplate }}
+    {{- tpl .Values.common.sa.annotationsTemplate . | nindent 4 }}
+    {{- end }}
+    {{- if .Values.common.sa.annotations }}
+    {{- toYaml .Values.common.sa.annotations . | nindent 4 }}
+    {{- end }}
+  {{- end }}
+automountServiceAccountToken: false
+{{- end -}}
+{{- end -}}

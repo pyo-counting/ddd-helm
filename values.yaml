@@ -1,0 +1,3136 @@
+# Default values.yaml file
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# environment is where ddd application will be deployed.
+# Required.
+environment: dev
+# domainCode is DOMAIN_CODE of ddd application.
+# This values used for k8s resources name prefix
+# ref: https://kurly0521.atlassian.net/wiki/spaces/FIN/pages/3948643678/Naming+convention#%EB%8F%84%EB%A9%94%EC%9D%B8-/-%EC%95%A0%ED%94%8C%EB%A6%AC%EC%BC%80%EC%9D%B4%EC%85%98(%EB%A7%88%EC%9D%B4%ED%81%AC%EB%A1%9C%EC%84%9C%EB%B9%84%EC%8A%A4)
+# Required.
+domainCode: domain
+
+common:
+  # cm(ConfigMap) holds configuration data for po to consume.
+  # This common cm will be set shell environment in po's containers.
+  # ref: https://v1-27.docs.kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/config-map-v1/
+  cm:
+    enabled: true
+    # labels is labels map.
+    # Optional.
+    labels: {}
+    # labelsTemplate is labels map.
+    # This field is rendered through the Helm tpl function.
+    # Optional.
+    labelsTemplate: ""
+    # annotations is labels map.
+    # Optional.
+    annotations: {}
+    # annotationsTemplate is labels map.
+    # This field is rendered through the Helm tpl function.
+    # Optional.
+    annotationsTemplate: ""
+    # dataTemplate contains the configuration data.
+    # Each key must consist of alphanumeric characters, '-', '_' or '.'.
+    # Values with non-UTF-8 byte sequences must use the binaryDataTemplate field.
+    # this field supports Helm templates.
+    # Optional.
+    dataTemplate: |-
+      # Where application will be deployed.
+      # Required.
+      ACTIVE_PROFILE: {{ .Values.environment }}
+      # A region of the earth that has adopted the same standard time.
+      # ref: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+      # Required.
+      TZ: Asia/seoul
+    # binaryDataTemplate contains the binary data.
+    # Each key must consist of alphanumeric characters, '-', '_' or '.'.
+    # binaryDataTemplate can contain byte sequences that are not in the UTF-8 range.
+    # this field supports Helm templates.
+    # Optional.
+    binaryDataTemplate: ""
+
+  # ns(Namespace) provides a scope for Names.
+  # ref: https://v1-27.docs.kubernetes.io/docs/reference/kubernetes-api/cluster-resources/namespace-v1/
+  ns:
+    enabled: true
+    # labels is labels map.
+    # Optional.
+    labels: {}
+    # labelsTemplate is labels map.
+    # This field is rendered through the Helm tpl function.
+    # Optional.
+    labelsTemplate: ""
+    # annotations is labels map.
+    # Optional.
+    annotations: {}
+    # annotationsTemplate is labels map.
+    # This field is rendered through the Helm tpl function.
+    # Optional.
+    annotationsTemplate: ""
+
+  # rb(RoleBinding) references a role, but does not contain it.
+  # It can reference a role in the same ns or a cr in the global ns.
+  # It adds who information via Subjects and ns information by which ns it exists in.
+  # rb in a given ns only have effect in that ns.
+  # ref: https://kubernetes.io/docs/reference/kubernetes-api/authorization-resources/role-binding-v1/
+  rb:
+    enabled: true
+    # labels is labels map.
+    # Optional.
+    labels: {}
+    # labelsTemplate is labels map.
+    # This field is rendered through the Helm tpl function.
+    # Optional.
+    labelsTemplate: ""
+    # annotations is labels map.
+    # Optional.
+    annotations: {}
+    # annotationsTemplate is labels map.
+    # This field is rendered through the Helm tpl function.
+    # Optional.
+    annotationsTemplate: ""
+    # roleRef can reference a role in the current ns or a cr in the global ns.
+    # If the roleRef cannot be resolved, the Authorizer must return an error. This field is immutable.
+    roleRef:
+      # apiGroup is the group for the resource being referenced.
+      # Required.
+      apiGroup:
+      # kind is the type of resource being referenced.
+      # Required.
+      kind:
+      # name is the name of resource being referenced.
+      # Required.
+      name:
+
+  # sa(ServiceAccount) binds together: * a name, understood by users, and perhaps by peripheral systems,
+  # for an identity * a principal that can be authenticated and authorized * a set of sec
+  # ref: https://v1-27.docs.kubernetes.io/docs/reference/kubernetes-api/authentication-resources/service-account-v1/
+  sa:
+    enabled: true
+    # labels is labels map.
+    # Optional.
+    labels: {}
+    # labelsTemplate is labels map.
+    # This field is rendered through the Helm tpl function.
+    # Optional.
+    labelsTemplate: ""
+    # annotations is labels map.
+    # Optional.
+    annotations: {}
+    # annotationsTemplate is labels map.
+    # This field is rendered through the Helm tpl function.
+    # Optional.
+    annotationsTemplate: |-
+      # AWS IAM role for some k8s controller manager that use AWS resources like secret manager.
+      # Required.
+      eks.amazonaws.com/role-arn: test
+
+  # sec holds secret data of a certain type.
+  # The total bytes of the values in the Data field must be less than MaxSecretSize bytes.
+  # ref: https://v1-27.docs.kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/secret-v1/
+  sec:
+    enabled: true
+    # labels is labels map.
+    # Optional.
+    labels: {}
+    # labelsTemplate is labels map.
+    # This field is rendered through the Helm tpl function.
+    # Optional.
+    labelsTemplate: ""
+    # annotations is labels map.
+    # Optional.
+    annotations: {}
+    # annotationsTemplate is labels map.
+    # This field is rendered through the Helm tpl function.
+    # Optional.
+    annotationsTemplate: ""
+    # dataTemplate contains the secret data. Each key must consist of alphanumeric characters, '-', '_' or '.'.
+    # The serialized form of the secret data is a base64 encoded string, representing the arbitrary (possibly non-string) data value here.
+    # Optional.
+    dataTemplate: ""
+    # stringDataTemplate allows specifying non-binary secret data in string form.
+    # It is provided as a write-only input field for convenience.
+    # All keys and values are merged into the data field on write, overwriting any existing values.
+    # The stringData field is never output when reading from the API.
+    # Optional.
+    stringDataTemplate: ""
+    # type used to facilitate programmatic handling of secret data.
+    # Valid values 'Opaque', 'kubernetes.io/service-account-token', 'kubernetes.io/dockercfg','kubernetes.io/dockerconfigjson',
+    # 'kubernetes.io/basic-auth', 'kubernetes.io/ssh-auth', 'kubernetes.io/tls', 'bootstrap.kubernetes.io/token'
+    # Defaults to 'Opaque'
+    # Optional.
+    type:
+
+application:
+  app:
+    # name is a MICROSERVICE(or APPLICATION) name.
+    # ref: https://kurly0521.atlassian.net/wiki/spaces/FIN/pages/3948643678/Naming+convention#%EB%8F%84%EB%A9%94%EC%9D%B8-/-%EC%95%A0%ED%94%8C%EB%A6%AC%EC%BC%80%EC%9D%B4%EC%85%98(%EB%A7%88%EC%9D%B4%ED%81%AC%EB%A1%9C%EC%84%9C%EB%B9%84%EC%8A%A4)
+    # Required.
+    name: app
+  
+    # cm(ConfigMap) holds configuration data for po to consume.
+    # This cm will be set shell environment in po's containers.
+    # ref: https://v1-27.docs.kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/config-map-v1/
+    cm:
+      enabled: false
+      # labels is labels map.
+      # Optional.
+      labels: {}
+      # labelsTemplate is labels map.
+      # This field is rendered through the Helm tpl function.
+      # Optional.
+      labelsTemplate: ""
+      # annotations is labels map.
+      # Optional.
+      annotations: {}
+      # annotationsTemplate is labels map.
+      # This field is rendered through the Helm tpl function.
+      # Optional.
+      annotationsTemplate: ""
+      # dataTemplate contains the configuration data.
+      # Each key must consist of alphanumeric characters, '-', '_' or '.'.
+      # Values with non-UTF-8 byte sequences must use the binaryDataTemplate field.
+      # this field supports Helm templates.
+      # Optional.
+      dataTemplate: ""
+      # binaryDataTemplate contains the binary data.
+      # Each key must consist of alphanumeric characters, '-', '_' or '.'.
+      # binaryDataTemplate can contain byte sequences that are not in the UTF-8 range.
+      # this field supports Helm templates.
+      # Optional.
+      binaryDataTemplate: ""
+    
+    # cwf(CronWorkflow) is workflows that run on a schedule.
+    # They are designed to wrap a workflowSpec and to mimic the options of Kubernetes CronJobs.
+    # In essence, CronWorkflow = Workflow + some specific cron options.
+    # ref: https://argo-workflows.readthedocs.io/en/latest/fields/#cronworkflowspec
+    # ref: https://argo-workflows.readthedocs.io/en/latest/cron-workflows/
+    cwf:
+      enabled: false
+      # lists presents a list of CronWorkflow.
+      lists:
+          # name is an identifer to distinguish CronWorkflow list.
+          # Required.
+        - name: 
+          # labels is labels map.
+          # Optional.
+          labels: {}
+          # labelsTemplate is labels map.
+          # This field is rendered through the Helm tpl function.
+          # Optional.
+          labelsTemplate: ""
+          # annotations is labels map.
+          # Optional.
+          annotations: {}
+          # annotationsTemplate is labels map.
+          # This field is rendered through the Helm tpl function.
+          # Optional.
+          annotationsTemplate: ""
+          # timezone is the timezone against which the cron schedule will be calculated, e.g. "Asia/Tokyo".
+          # ref: https://argo-workflows.readthedocs.io/en/latest/cron-workflows/#daylight-saving
+          # Defaults to machine's local time.
+          # Optional.
+          timezone: Asia/Seoul
+          # schedules is a IANA Timezone list of schedules to run the Workflow in Cron format.
+          # ref: https://argo-workflows.readthedocs.io/en/latest/cron-workflows/#cron-schedule-syntax
+          # Required.
+          schedules:
+            - "* * * * *"
+          # concurrencyPolicy is the K8s-style concurrency policy that will be used.
+          # What to do if multiple Workflows are scheduled at the same time.
+          # Valid values 'Allow', 'Replace', 'Forbid'.
+          # Defaults to 'Allow'.
+          concurrencyPolicy: Allow
+          # startingDeadlineSeconds is the K8s-style deadline that will limit the time a CronWorkflow will be run after its original scheduled time if it is missed.
+          # ref: https://argo-workflows.readthedocs.io/en/latest/cron-workflows/#crash-recovery
+          # Defaults to '0'.
+          startingDeadlineSeconds: 0
+          # successfulJobsHistoryLimit is the number successful Workflows to persist.
+          # Defaults to '3'.
+          successfulJobsHistoryLimit: 3
+          # failedJobsHistoryLimit is the number failed Workflows to persist.
+          # Defaults to '1'.
+          failedJobsHistoryLimit: 1
+          # stopStrategy defines if the CronWorkflow should stop scheduling based on a condition.
+          # Optional.
+          stopStrategy:
+            # expression is an expression that stops scheduling workflows when true.
+            # Use the variables failed or succeeded to access the number of failed or successful child workflows.
+            # ref: https://argo-workflows.readthedocs.io/en/latest/cron-workflows/#automatically-stopping-a-cronworkflow
+            # Required.
+            expression: 'succeeded >= 1'
+          # when is an expression that determines if a run should be scheduled.
+          # This field allow for variable references which are automatically substituted by Argo.
+          # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/conditionals/
+          # ref: https://argo-workflows.readthedocs.io/en/latest/variables/
+          # Optional.
+          when: '{{= cronworkflow.lastScheduledTime == nil || (now() - cronworkflow.lastScheduledTime).Seconds() > 360 }}'
+          # suspend is a flag that will stop new CronWorkflows from running if set to true.
+          # If true Workflow scheduling will not occur. Can be set from the CLI, GitOps, or directly.
+          # Valid values 'true', 'false'.
+          # Defaults to 'false'.
+          # Optional.
+          suspend: false
+          # workflow contains metadata and spec of workflow to be run.
+          workflow:
+            # metadata contains some metadata of the workflow to be run.
+            # Optional.
+            metadata:
+              # labels is labels map.
+              # Optional.
+              labels: {}
+              # labelsTemplate is labels map.
+              # This field is rendered through the Helm tpl function.
+              # Optional.
+              labelsTemplate: ""
+              # annotations is labels map.
+              # Optional.
+              annotations: {}
+              # annotationsTemplate is labels map.
+              # This field is rendered through the Helm tpl function.
+              # Optional.
+              annotationsTemplate: ""
+            # sepc is the spec of the workflow to be run.
+            spec:
+              # activeDeadlineSeconds is duration in seconds relative to the workflow start time which the workflow is allowed to run before the controller terminates.
+              # A value of zero is used to terminate a Running workflow.
+              # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/timeouts/
+              # Optional.
+              activeDeadlineSeconds: 60
+              # priority is used if controller is configured to process limited number of workflows in parallel.
+              # Workflows with higher priority are processed first.
+              # Optional.
+              priority: 10
+              # retryStrategy is default retry strategy for all templates.
+              # ref: https://argo-workflows.readthedocs.io/en/latest/retries/
+              # Optional.
+              retryStrategy:
+                # enabledNodeAntiAffinity prevents running workflow's step on the same host.
+                # In order to prevent running steps on the same host, it uses "kubernetes.io/hostname".
+                # Valid values 'true', 'false'.
+                # Optional.
+                enabledNodeAntiAffinity: true
+                # backoff is a backoff strategy.
+                # Optional.
+                backoff:
+                  # duration is the amount to back off.
+                  # Default unit is seconds, but could also be a duration (e.g. "2m", "1h").
+                  duration: 10
+                  # factor is a factor to multiply the base duration after each failed retry
+                  factor: 1
+                  # maxDuration is the maximum amount of time allowed for a workflow in the backoff strategy.
+                  # It is important to note that if the workflow template includes activeDeadlineSeconds,
+                  # the pod's deadline is initially set with activeDeadlineSeconds.
+                  # However, when the workflow fails, the pod's deadline is then overridden by maxDuration.
+                  # This ensures that the workflow does not exceed the specified maximum duration when retries are involved.
+                  maxDuration: 60s
+                # expression is a condition expression for when a node will be retried.
+                # If it evaluates to false, the node will not be retried and the retry strategy will be ignored.
+                # ref: https://argo-workflows.readthedocs.io/en/latest/retries/#conditional-retries
+                # Optional.
+                expression: 'asInt(lastRetry.exitCode) > 1 && true'
+                # limit is the maximum number of retry attempts when retrying a container.
+                # It does not include the original container; the maximum number of total attempts will be limit + 1.
+                # Optional.
+                limit: 2
+                # retryPolicy is a policy of NodePhase statuses that will be retried.
+                # ref: https://argo-workflows.readthedocs.io/en/latest/retries/#retry-policies
+                # Valid values 'Always', 'OnFailure', 'OnError', 'OnTransientError'.
+                # Optional.
+                retryPolicy: OnFailure
+              # synchronization holds synchronization lock configuration for this Workflow.
+              # ref: https://argo-workflows.readthedocs.io/en/latest/synchronization/
+              # Optional.
+              synchronization:
+                # mutexes holds the list of Mutex lock details.
+                # Optional.
+                mutexes:
+                    # name is the name of the mutex.
+                  - name: workflow-mutex-1
+                    # namespace is the namespace of the mutex.
+                    # Defaults to 'namespace of workflow'
+                    namespace: ""
+                # semaphores holds the list of Semaphores configuration.
+                # Optional.
+                semaphores:
+                    # configMapKeyRef is configmap selector for Semaphore configuration.
+                  - configMapKeyRef:
+                      # key is key of ConfigMap.
+                      key: test-workflow-semaphore-1
+                      # name is name of the referent.
+                      name: test-workflow-semaphore-1
+                      # optional means whether the ConfigMap or its key must be defined.
+                      # Optional.
+                      optional: true
+                    # namespace is the namespace of the configmap.
+                    # Defaults to 'namespace of workflow'
+                    namespace: ""
+              # ttlStrategy limits the lifetime of a Workflow that has finished execution depending on if it Succeeded or Failed.
+              # If this struct is set, once the Workflow finishes, it will be deleted after the time to live expires.
+              # If this field is unset, the controller config map will hold the default values.
+              # ref: https://argo-workflows.readthedocs.io/en/latest/cost-optimisation/#limit-the-total-number-of-workflows-and-pods
+              # Optional.
+              ttlStrategy:
+                # secondsAfterCompletion is the number of seconds to live after completion
+                # Optional.
+                secondsAfterCompletion: 10
+                # secondsAfterFailure is the number of seconds to live after failure
+                # Optional.
+                secondsAfterFailure: 10
+                # secondsAfterSuccess is the number of seconds to live after success
+                # Optional.
+                secondsAfterSuccess: 10
+              # securityContext holds po-level security attributes and common container settings.
+              # Some fields are also present in container.securityContext.
+              # Field values of container.securityContext take precedence over field values of PodSecurityContext.
+              securityContext:
+                # runAsUser is UID to run the entrypoint of the container process.
+                # If set in both SecurityContext and PodSecurityContext,
+                # the value specified in SecurityContext takes precedence for that container.
+                # Defaults to user specified in image metadata if unspecified.
+                # Required.
+                runAsUser: 1000
+                # runAsGroup is GID to run the entrypoint of the container process.
+                # If set in both SecurityContext and PodSecurityContext,
+                # the value specified in SecurityContext takes precedence for that container
+                # Required.
+                runAsGroup: 1000
+                # fsGroup is a special supplemental group that applies to all containers in a po.
+                # Some volume types allow the Kubelet to change the ownership of that volume to be owned by the po.
+                # If unset, the Kubelet will not modify the ownership and permissions of any volume.
+                # Optional.
+                fsGroup: 1000
+                # fsGroupChangePolicy defines behavior of changing ownership and permission of the volume before being exposed inside po.
+                # This field will only apply to volume types which support fsGroup based ownership(and permissions).
+                # It will have no effect on ephemeral volume types such as: secret, configmaps and emptydir.
+                # Valid values 'OnRootMismatch', 'Always'.
+                # Defaults to 'Always'.
+                # Optional.
+                fsGroupChangePolicy: Always
+                # supplementalGroups is list of groups applied to the first process run in each container,
+                # in addition to the container's primary GID, the fsGroup (if specified), and group memberships
+                # defined in the container image for the uid of the container process.
+                # If unspecified, no additional groups are added to any container.
+                # Note that group memberships defined in the container image for the uid of the container process are still effective,
+                # even if they are not included in this list.
+                # Optional.
+                supplementalGroups: []
+              # nodeSelector is a selector which will result in all pods of the workflow to be scheduled on the selected node(s).
+              # This is able to be overridden by a nodeSelector specified in the template.
+              # https://argo-workflows.readthedocs.io/en/latest/cost-optimisation/#use-a-node-selector-to-use-cheaper-instances
+              # Optional.
+              nodeSelector: {}
+              # parallelism limits the max total parallel pods that can execute at the same time in a workflow.
+              # ref: https://argo-workflows.readthedocs.io/en/latest/synchronization/#workflow-level-parallelism
+              # Optional.
+              parallelism: 2
+              # podGC describes the strategy to use when deleting completed pods.
+              # Optional.
+              podGC:
+                # deleteDelayDuration specifies the duration before pods in the GC queue get deleted.
+                deleteDelayDuration: 60s
+                # labelSelector is the label selector to check if the pods match the labels before being added to the pod GC queue.
+                # The result of matchLabels and matchExpressions are ANDed.
+                # An empty label selector matches all objects. A null label selector matches no objects.
+                labelSelector:
+                  # matchExpressions is a list of label selector requirements. The requirements are ANDed.
+                  matchExpressions:
+                      # key is the label key that the selector applies to.
+                    - key: tset-podgc-labelselector
+                      # operator represents a key's relationship to a set of values.
+                      # Valid values 'In', 'NotIn', 'Exists', 'DoesNotExist'.
+                      operator: DoesNotExist
+                      # values is an array of string values. If the operator is In or NotIn, the values array must be non-empty.
+                      # If the operator is Exists or DoesNotExist, the values array must be empty.
+                      # This array is replaced during a strategic merge patch.
+                      values: []
+                  # matchLabels is a map of {key,value} pairs.
+                  # A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is "key",
+                  # the operator is "In", and the values array contains only "value". The requirements are ANDed.
+                  matchLabels: {}
+                # strategy is the strategy to use.
+                # Valid values 'OnPodCompletion', 'OnPodSuccess', 'OnWorkflowCompletion', 'OnWorkflowSuccess'.
+                # If unset, does not delete Pods.
+                strategy: OnWorkflowCompletion
+              # podMetadata defines additional metadata that should be applied to workflow pods.
+              # Optional.
+              podMetadata:
+                # labels is labels map.
+                # Optional.
+                labels: {}
+                # labelsTemplate is labels map.
+                # This field is rendered through the Helm tpl function.
+                # Optional.
+                labelsTemplate: ""
+                # annotations is labels map.
+                # Optional.
+                annotations: {}
+                # annotationsTemplate is labels map.
+                # This field is rendered through the Helm tpl function.
+                # Optional.
+                annotationsTemplate: ""
+              # podSpecPatch holds strategic merge patch to apply against the pod spec.
+              # Allows parameterization of container fields which are not strings (e.g. resource limits).
+              # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/artifacts/#artifacts
+              # Optional.
+              podSpecPatch: |-
+                initContainers:
+                  - name: init
+                    resources:
+                      requests:
+                        memory: 500Mi
+                        cpu: 300m
+              # metrics are a list of metrics emitted from this Workflow.
+              # ref: https://argo-workflows.readthedocs.io/en/latest/metrics/
+              # Optional.
+              metrics:
+                # prometheus is a list of prometheus metrics to be emitted.
+                prometheus:
+                    # type is a prometheus metric type.
+                    # Valid values 'counter', 'gauge', 'histogram'.
+                    # Required.
+                  - type: counter
+                    # name is the name of the metric.
+                    # Required.
+                    name: test_workflow_counter
+                    # help is a string that describes the metric.
+                    # Required.
+                    help: "test workflow counter"
+                    # when is a conditional statement that decides when to emit the metric.
+                    # Optional.
+                    when: "{{status}} == Succeeded"
+                    # labels is a list of metric labels.
+                    # Optional.
+                    labels:
+                      - key: type
+                        value: counter
+                    # counter is counter metric.
+                    counter:
+                      # value is the value of the metric.
+                      # Required.
+                      value: 1
+                  - type: gauge
+                    name: test_workflow_gauge
+                    help: "test workflow gauge"
+                    when: "{{status}} == Failed"
+                    labels:
+                      - key: type
+                        value: gauge
+                    # gauge is a gauge metric.
+                    gauge:
+                      # operation defines the operation to apply with value and the metrics' current value.
+                      # Optional.
+                      operation:
+                      # realtime emits this metric in real time if applicable.
+                      # Optional.
+                      realtime: false
+                      # value is the value to be used in the operation with the metric's current value.
+                      # If no operation is set, value is the value of the metric.
+                      # Required.
+                      value: "{{workflow.duration}}"
+                  # histogram
+                  - type: histogram
+                    name: test_workflow_histogram
+                    help: "test workflow histogram"
+                    when: "{{status}} == Succeeded"
+                    labels:
+                      - key: type
+                        value: histogram
+                    # histogram is a histogram metric.
+                    histogram:
+                      # buckets is a list of bucket divisors for the histogram.
+                      # Required.
+                      buckets: [1, 2, 3, 4]
+                      # value is the value of the metric.
+                      # Required.
+                      value: 1.5
+              # arguments contain the parameters and artifacts sent to the workflow entrypoint.
+              # Parameters are referencable globally using the 'workflow' variable prefix.
+              # Optional.
+              arguments:
+                # parameters is the list of parameters to pass to the template or workflow.
+                # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/parameters/
+                # ref: https://argo-workflows.readthedocs.io/en/latest/workflow-templates/#working-with-parameters
+                parameters:
+                    # name is the parameter name.
+                  - name: test-workflow-arguments-parameter-1
+                    # description is the parameter description.
+                    description: "test workflow arguments parameter 1"
+                    # value is the literal value to use for the parameter.
+                    value: 1
+                    # enum holds a list of string values to choose from, for the actual value of the parameter.
+                    enum: [1, 2]
+              # entrypoint is a template reference to the starting point.
+              # Required.
+              entrypoint: test-template-dag-1
+              # hooks holds the lifecycle hook which is invoked at lifecycle of step, irrespective of the success, failure, or error status of the primary step.
+              # ref:https://argo-workflows.readthedocs.io/en/latest/lifecyclehook/
+              # Optional.
+              hooks:
+                  # name is name of hook.
+                  # You must not name a 'exit' or it becomes an exit handler; otherwise the hook name has no relevance.
+                - name: test-workflow-hook-1
+                  # expression is a condition expression for when a node will be retried.
+                  # If it evaluates to false, the node will not be retried and the retry strategy will be ignored.
+                  # Optional.
+                  expression: workflow.status == "Failed"
+                  # template is the name of the template to execute by the hook.
+                  # Optional.
+                  template: test-template-container-1
+                  # templateRef is the reference to the template resource to execute by the hook.
+                  # Optional.
+                  templateRef:
+                    # clusterScope indicates the referred template is cluster scoped.
+                    # Valid values 'true', 'false'.
+                    clusterScope:
+                    # name is the resource name of the template.
+                    name: ""
+                    # template is the name of referred template in the resource.
+                    template: ""
+                  # arguments contain the parameters and artifacts sent to the workflow entrypoint.
+                  # Parameters are referencable globally using the 'workflow' variable prefix.
+                  # Optional.
+                  arguments:
+                    # parameters is the list of parameters to pass to the template or workflow.
+                    # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/parameters/
+                    # ref: https://argo-workflows.readthedocs.io/en/latest/workflow-templates/#working-with-parameters
+                    parameters:
+                        # name is the parameter name.
+                      - name: test-workflow-hook-1-arguments-parameter-1
+                        # description is the parameter description.
+                        description: "test workflow hook 1 arguments parameter 1"
+                        # value is the literal value to use for the parameter.
+                        value: 1
+                        # enum holds a list of string values to choose from, for the actual value of the parameter.
+                        enum: [1, 2]
+              # onExit is a template reference which is invoked at the end of the workflow, irrespective of the success, failure, or error.
+              # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/exit-handlers/
+              # Optional.
+              onExit: test-template-container-1
+              # shutdown will shutdown the workflow according to its ShutdownStrategy.
+              # Optional.
+              shutdown: ""
+              # suspend will suspend the workflow and prevent execution of any future steps in the workflow.
+              # Optional.
+              suspend: false
+              # templates is a list of workflow templates used in a workflow.
+              # Optional.
+              templates:
+                  # name is the name of the template.
+                - name: test-template-container-1
+                  # retryStrategy describes how to retry a template when it fails.
+                  # Optional.
+                  retryStrategy:
+                    # enabledNodeAntiAffinity prevents running workflow's step on the same host.
+                    # In order to prevent running steps on the same host, it uses "kubernetes.io/hostname".
+                    # Valid values 'true', 'false'.
+                    # Optional.
+                    enabledNodeAntiAffinity: true
+                    # backoff is a backoff strategy.
+                    # Optional.
+                    backoff:
+                      # duration is the amount to back off.
+                      # Default unit is seconds, but could also be a duration (e.g. "2m", "1h").
+                      duration: 10
+                      # factor is a factor to multiply the base duration after each failed retry
+                      factor: 1
+                      # maxDuration is the maximum amount of time allowed for a workflow in the backoff strategy.
+                      # It is important to note that if the workflow template includes activeDeadlineSeconds,
+                      # the pod's deadline is initially set with activeDeadlineSeconds.
+                      # However, when the workflow fails, the pod's deadline is then overridden by maxDuration.
+                      # This ensures that the workflow does not exceed the specified maximum duration when retries are involved.
+                      maxDuration: 60s
+                    # expression is a condition expression for when a node will be retried.
+                    # If it evaluates to false, the node will not be retried and the retry strategy will be ignored.
+                    # ref: https://argo-workflows.readthedocs.io/en/latest/retries/#conditional-retries
+                    # Optional.
+                    expression: 'asInt(lastRetry.exitCode) > 1 && true'
+                    # limit is the maximum number of retry attempts when retrying a container.
+                    # It does not include the original container; the maximum number of total attempts will be limit + 1.
+                    # Optional.
+                    limit: 2
+                    # retryPolicy is a policy of NodePhase statuses that will be retried.
+                    # ref: https://argo-workflows.readthedocs.io/en/latest/retries/#retry-policies
+                    # Valid values 'Always', 'OnFailure', 'OnError', 'OnTransientError'.
+                    # Optional.
+                    retryPolicy: OnFailure
+                  # daemon will allow a workflow to proceed to the next step so long as the container reaches readiness.
+                  # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/daemon-containers/
+                  # Valid values 'true', 'false'.
+                  # Optional.
+                  daemon: false
+                  # failFast, if specified, will fail this template if any of its child pods has failed.
+                  # This is useful for when this template is expanded with withItems, etc.
+                  # Valid values 'true', 'false'.
+                  # Optional.
+                  failFast: false
+                  # timeout allows to set the total node execution timeout duration counting from the node's start time.
+                  # This duration also includes time in which the node spends in Pending state.
+                  # This duration may not be applied to Step or DAG templates.
+                  # Optional.
+                  timeout:
+                  # synchronization holds synchronization lock configuration for this Workflow.
+                  # ref: https://argo-workflows.readthedocs.io/en/latest/synchronization/
+                  # Optional.
+                  synchronization:
+                    # mutexes holds the list of Mutex lock details.
+                    # Optional.
+                    mutexes:
+                        # name is the name of the mutex.
+                      - name: test-template-container-1-mutex-1
+                        # namespace is the namespace of the mutex.
+                        # Defaults to 'namespace of workflow'
+                        namespace: ""
+                    # semaphores holds the list of Semaphores configuration.
+                    # Optional.
+                    semaphores:
+                        # configMapKeyRef is configmap selector for Semaphore configuration.
+                      - configMapKeyRef:
+                          # key is key of ConfigMap.
+                          key: test-template-container-1-semaphore-1
+                          # name is name of the referent.
+                          name: test-template-container-1-semaphore-1
+                          # optional means whether the ConfigMap or its key must be defined.
+                          # Optional.
+                          optional: true
+                        # namespace is the namespace of the configmap.
+                        # Defaults to 'namespace of workflow'
+                        namespace: ""
+                  # memoize allows templates to use outputs generated from already executed templates.
+                  # ref: https://argo-workflows.readthedocs.io/en/latest/memoization/
+                  # Optional.
+                  memoize:
+                    # key is the key to use as the caching key.
+                    # Required.
+                    key: test-template-container-1-memoize-1
+                    # maxAge is the maximum age (e.g. "180s", "24h") of an entry that is still considered valid.
+                    # If an entry is older than the MaxAge, it will be ignored.
+                    # Optional.
+                    maxAge: 10s
+                    # cache sets and configures the kind of cache.
+                    cache:
+                      # configMap sets a ConfigMap-based cache.
+                      configMap:
+                        # key is key of ConfigMap.
+                        key: test-template-container-1-memoize-1
+                        # name is name of the referent.
+                        name: "test-template-container-1-memoize-1"
+                        # optional means whether the ConfigMap or its key must be defined.
+                        # Optional.
+                        optional: true
+                  # metrics are a list of metrics emitted from this Workflow.
+                  # ref: https://argo-workflows.readthedocs.io/en/latest/metrics/
+                  # Optional.
+                  metrics:
+                    # prometheus is a list of prometheus metrics to be emitted.
+                    prometheus:
+                        # type is a prometheus metric type.
+                        # Valid values 'counter', 'gauge', 'histogram'.
+                        # Required.
+                      - type: counter
+                        # name is the name of the metric.
+                        # Required.
+                        name: test_template_container_1_counter
+                        # help is a string that describes the metric.
+                        # Required.
+                        help: "test template container 1 counter"
+                        # when is a conditional statement that decides when to emit the metric.
+                        # Optional.
+                        when: "{{status}} == Succeeded"
+                        # labels is a list of metric labels.
+                        # Optional.
+                        labels:
+                          - key: type
+                            value: counter
+                        # counter is counter metric.
+                        counter:
+                          # value is the value of the metric.
+                          # Required.
+                          value: 1
+                      - type: gauge
+                        name: test_template_container_1_gauge
+                        help: "test template container 1 gauge"
+                        when: "{{status}} == Failed"
+                        labels:
+                          - key: type
+                            value: gauge
+                        # gauge is a gauge metric.
+                        gauge:
+                          # operation defines the operation to apply with value and the metrics' current value.
+                          # Optional.
+                          operation:
+                          # realtime emits this metric in real time if applicable.
+                          # Optional.
+                          realtime: false
+                          # value is the value to be used in the operation with the metric's current value.
+                          # If no operation is set, value is the value of the metric.
+                          # Required.
+                          value: "{{workflow.duration}}"
+                      # histogram
+                      - type: histogram
+                        name: test_template_container_1_histogram
+                        help: "test template container 1 histogram"
+                        when: "{{status}} == Succeeded"
+                        labels:
+                          - key: type
+                            value: histogram
+                        # histogram is a histogram metric.
+                        histogram:
+                          # buckets is a list of bucket divisors for the histogram.
+                          # Required.
+                          buckets: [1, 2, 3, 4]
+                          # value is the value of the metric.
+                          # Required.
+                          value: 1.5
+                  # inputs describe what inputs parameters and artifacts are supplied to this template.
+                  # ref: https://argo-workflows.readthedocs.io/en/latest/workflow-inputs/
+                  # Optional.
+                  inputs:
+                    # parameters are a list of parameters passed as inputs.
+                    # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/parameters/
+                    # ref: https://argo-workflows.readthedocs.io/en/latest/workflow-templates/#working-with-parameters
+                    parameters:
+                        # name is the parameter name.
+                        # Required.
+                      - name: test-template-container-1-inputs-parameter-1
+                        # description is the parameter description.
+                        description: "test template container 1 input parameter 1"
+                        # default is the default value to use for an input parameter if a value was not supplied.
+                        # Optional.
+                        default: 4
+                        # value is the literal value to use for the parameter.
+                        value: 1
+                        # enum holds a list of string values to choose from, for the actual value of the parameter.
+                        enum: [1, 2]
+                  # outputs describe the parameters and artifacts that this template produces.
+                  # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/output-parameters/
+                  # Optional.
+                  outputs:
+                    # parameters holds the list of output parameters produced by a step
+                    # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/output-parameters/
+                    parameters:
+                        # name is the parameter name.
+                        # Required.
+                      - name: test-template-container-1-outputs-parameter-1
+                        # globalName exports an output parameter to the global scope,
+                        # making it available as '{{io.argoproj.workflow.v1alpha1.outputs.parameters.XXXX}} and in workflow.status.outputs.parameters.
+                        # Optional.
+                        globalName: test-template-container-1-outputs-parameter-1
+                        # description is the parameter description.
+                        description: test-template-container-1-outputs-parameter-1
+                        # default is the default value to use for an input parameter if a value was not supplied.
+                        # Optional.
+                        default: 4
+                        # value is the literal value to use for the parameter.
+                        # Optional.
+                        value: 1
+                        # enum holds a list of string values to choose from, for the actual value of the parameter.
+                        enum: [1, 2]
+                        # valueFrom is the source for the output parameter's value.
+                        # Optional.
+                        valueFrom:
+                          # path in the container to retrieve an output parameter value from in container templates.
+                          path: "path"
+                          # default specifies a value to be used if retrieving the value from the specified source fails.
+                          # Optional.
+                          default: "0"
+                          # type is valueFrom type.
+                          # Valid values 'configMapKeyRef', 'default', 'event', 'expression', 'jqFilter', 'jsonPath', 'parameter', 'supplied'.
+                          # Required.
+                          type: configMapKeyRef
+                          # configMapKeyRef is configmap selector for input parameter configuration.
+                          # Optional.
+                          configMapKeyRef:
+                            # key is key of ConfigMap.
+                            key: test-template-container-1-outputs-parameter-1
+                            # name is name of the referent.
+                            name: test-template-container-1-outputs-parameter-1
+                            # optional means whether the ConfigMap or its key must be defined.
+                            # Optional.
+                            optional: true
+                          # event is selector (https://github.com/expr-lang/expr) that is evaluated against the event to get the value of the parameter.
+                          # E.g. payload.message
+                          # Optional.
+                          event: ""
+                          # expression is evaluated to specify the value for the parameter.
+                          # Optional.
+                          expression: ""
+                          # jqFilter is expression against the resource object in resource templates.
+                          # Optional.
+                          jqFilter: ""
+                          # jsonPath is a resource to retrieve an output parameter value from in resource templates.
+                          # Optional.
+                          jsonPath: ""
+                          # parameter is reference to a step or dag task in which to retrieve an output parameter value from (e.g. '{{steps.mystep.outputs.myparam}}').
+                          # Optional.
+                          parameter: ""
+                          # supplied value to be filled in directly, either through the CLI, API, etc.
+                          # Valid values 'true', 'false'.
+                          # Optional.
+                          supplied: false
+                  # activeDeadlineSeconds relative to the StartTime that the pod may be active on a node before the system actively tries to terminate the pod.
+                  # value must be positive integer This field is only applicable to container and script templates.
+                  # Optional.
+                  activeDeadlineSeconds: ""
+                  # nodeSelector is a selector to schedule this step of the workflow to be run on the selected node(s).
+                  # Overrides the selector set at the workflow level.
+                  # https://argo-workflows.readthedocs.io/en/latest/cost-optimisation/#use-a-node-selector-to-use-cheaper-instances
+                  # Optional.
+                  nodeSelector: {}
+                  # parallelism limits the max total parallel pods that can execute at the same time within the boundaries of this template invocation.
+                  # If additional steps/dag templates are invoked, the pods created by those templates will not be counted towards this total.
+                  # Optional.
+                  parallelism: 
+                  # metadata sets the pods's metadata, i.e. annotations and labels.
+                  # Optional.
+                  metadata:
+                    # labels is labels map.
+                    # Optional.
+                    labels: {}
+                    # labelsTemplate is labels map.
+                    # This field is rendered through the Helm tpl function.
+                    # Optional.
+                    labelsTemplate: ""
+                    # annotations is labels map.
+                    # Optional.
+                    annotations: {}
+                    # annotationsTemplate is labels map.
+                    # This field is rendered through the Helm tpl function.
+                    # Optional.
+                    annotationsTemplate: ""
+                  # podSpecPatch holds strategic merge patch to apply against the pod spec.
+                  # Allows parameterization of container fields which are not strings (e.g. resource limits).
+                  # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/artifacts/#artifacts
+                  # Optional.
+                  podSpecPatch: |-
+                    initContainers:
+                      - name: init
+                        resources:
+                          requests:
+                            memory: 500Mi
+                            cpu: 300m
+                  # type is template types.
+                  # Valid values 'container', 'containerSet', 'dag', 'resource', 'script', 'steps', 'suspend', 'plugin', 'data', 'http'.
+                  # Required.
+                  type: container
+                  # container is the main container image to run in the pod.
+                  container:
+                    image:
+                      # name is container image name.
+                      # Required.
+                      name: argoproj/rollouts-demo
+                      # tag is container image tag.
+                      # Required.
+                      tag: blue
+                    # imagePullPolicy is image pull policy.
+                    # Valid values 'Always', 'Never', 'IfNotPresent'.
+                    # Defaults to 'Always'(if latest tag used), 'IfNotPresent'(otherwise).
+                    # Optional.
+                    imagePullPolicy: Always
+                    # command is entrypoint array of string. Not executed within a shell.
+                    # The image's ENTRYPOINT is used if this is not provided.
+                    # Optional.
+                    command: []
+                    # args is arguments of string to the entrypoint.
+                    # The image's CMD is used if this is not provided.
+                    # Optional.
+                    args: []
+                    # workingDir means container's working directory.
+                    # If not specified, the container runtime's default will be used, which might be configured in the container image.
+                    # Optional.
+                    workingDir: ""
+                    # ports is list of ports to expose from the container.
+                    # Optional.
+                    ports:
+                        # name is port specific name.
+                        # name for the container port can be referred to by svc.
+                        # Required.
+                      - name: http
+                        # protocol for port.
+                        # Valid values 'UDP', 'TCP', 'SCTP'.
+                        # Defaults to 'TCP'.
+                        # Required.
+                        protocol: TCP
+                        # containerPort is number of port to expose on the po's IP address.
+                        # Valid values 0 < x < 65536.
+                        # Required.
+                        containerPort: 8080
+                    # resources is compute resources required by container.
+                    resources:
+                      # requests describes the minimum amount of compute resources required.
+                      # If you specify a limits for a resource, but do not specify any requests,
+                      # and no admission-time mechanism has applied a default requests for that resource,
+                      # then k8s copies the limits you specified and uses it as the requested value for the resource.
+                      requests:
+                        # memory is minimum memory size for application running.
+                        # Optional.
+                        memory: 1Gi
+                        # cpu is minimum memory size for application running.
+                        # Optional.
+                        cpu: 500m
+                      # limits describes the maximum amount of compute resources allowed.
+                      limits:
+                        # memory is maximum memory size for application running.
+                        # Optional.
+                        memory: 1Gi
+                        # cpu is maximum memory size for application running.
+                        # Optional.
+                        cpu: 500m
+                    # lifecycle describes actions that the management system should take in response to container lifecycle events.
+                    # For the PostStart and PreStop lifecycle handlers, management of the container blocks until the action is complete,
+                    # unless the container process fails, in which case the handler is aborted.
+                    # Optional.
+                    lifecycle:
+                      # preStop is called immediately before a container is terminated due to an API request
+                      # or management event such as liveness/startup probe failure, preemption, resource contention, etc.
+                      # The handler is not called if the container crashes or exits.
+                      # The po's termination grace period countdown begins before the PreStop hook is executed.
+                      # Regardless of the outcome of the handler, the container will eventually terminate
+                      # within the po's termination grace period (unless delayed by finalizers).
+                      # Other management of the container blocks until the hook completes or
+                      # until the termination grace period is reached.
+                      preStop:
+                        # exec describes a "run in container" action.
+                        exec:
+                          # command is the command line to execute inside the container,
+                          # the working directory for the command is root ('/') in the container's filesystem.
+                          # The command is simply exec'd, it is not run inside a shell,
+                          # so traditional shell instructions ('|', etc) won't work. To use a shell,
+                          # you need to explicitly call out to that shell.
+                          # Exit status of 0 is treated as live/healthy and non-zero is unhealthy.
+                          # sleep command usually used for AWS load balancer controller target reconciliation and log collection.
+                          # Required.
+                          command: ["/bin/ash", "-c", "sleep 20"]
+                    # livenessProbe is periodic probe of container liveness.
+                    # Container will be restarted if the probe fails.
+                    livenessProbe:
+                      # type specifies type of the probe kind.
+                      # Valid values 'httpGet', 'tcpSocket'.
+                      type: httpGet
+                      # httpGet specifies the http request to perform.
+                      httpGet:
+                        # port is number or name of the port to access on the container.
+                        # Required.
+                        port: 8080
+                        # httpHeaders is headers to set in the request.
+                        # HTTP allows repeated headers.
+                        # Optional.
+                        httpHeaders:
+                          # - name:
+                          #   value:
+                        # path to access on the HTTP server.
+                        # Required.
+                        path: /
+                        # scheme to use for connecting to the host.
+                        # Defaults to 'HTTP'.
+                        # Optional.
+                        scheme: HTTP
+                      # tcpSocket specifies an action involving a TCP port.
+                      tcpSocket:
+                        # port is number or name of the port to access on the container.
+                        # Required.
+                        port:
+                      # initialDelaySeconds is bumber of seconds after the container has started before liveness probes are initiated.
+                      # Optional.
+                      initialDelaySeconds: 5
+                      # periodSeconds is how often (in seconds) to perform the probe.
+                      # Minimum value is '1'.
+                      # Default to '10'.
+                      # Optional.
+                      periodSeconds: 10
+                      # timeoutSeconds Nis number of seconds after which the probe times out.
+                      # Minimum value is '1'.
+                      # Defaults to '1'.
+                      # Optional.
+                      timeoutSeconds: 2
+                      # failureThreshold is minimum consecutive failures for the probe to be considered failed after having succeeded.
+                      # Minimum value is '1'.
+                      # Defaults to '3'.
+                      # Optional.
+                      failureThreshold: 2
+                    # readinessProbe is periodic probe of container service readiness.
+                    # Container will be removed from svc's ep if the probe fails.
+                    readinessProbe:
+                      # type specifies type of the probe kind.
+                      # Valid values 'httpGet', 'tcpSocket'.
+                      type: httpGet
+                      # httpGet specifies the http request to perform.
+                      httpGet:
+                        # port is number or name of the port to access on the container.
+                        # Required.
+                        port: 8080
+                        # httpHeaders is headers to set in the request.
+                        # HTTP allows repeated headers.
+                        # Optioanl.
+                        httpHeaders:
+                          # - name:
+                          #   value:
+                        # path to access on the HTTP server.
+                        # Required.
+                        path: /
+                        # scheme to use for connecting to the host.
+                        # Defaults to 'HTTP'.
+                        # Optioanl.
+                        scheme: HTTP
+                      # tcpSocket specifies an action involving a TCP port.
+                      tcpSocket:
+                        # port is number or name of the port to access on the container.
+                        # Required.
+                        port:
+                      # periodSeconds is how often (in seconds) to perform the probe.
+                      # Minimum value is '1'.
+                      # Default to '10'.
+                      # Optioanl.
+                      periodSeconds: 10
+                      # timeoutSeconds Nis number of seconds after which the probe times out.
+                      # Minimum value is '1'.
+                      # Defaults to '1'.
+                      # Optioanl.
+                      timeoutSeconds: 2
+                      # failureThreshold is minimum consecutive failures for the probe to be considered failed after having succeeded.
+                      # Minimum value is '1'.
+                      # Defaults to '3'.
+                      # Optioanl.
+                      failureThreshold: 2
+                      # successThreshold is minimum consecutive successes for the probe to be considered successful after having failed.
+                      # Defaults to 1.
+                      # Optioanl.
+                      successThreshold: 1
+                    # startupProbe indicates that the po has successfully initialized.
+                    # If specified, no other probes are executed until this completes successfully.
+                    # If this probe fails, the po will be restarted, just as if the livenessProbe failed.
+                    # This can be used to provide different probe parameters at the beginning of a po's lifecycle,
+                    # when it might take a long time to load data or warm a cache, than during steady-state operation.
+                    startupProbe:
+                      # type specifies type of the probe kind.
+                      # Valid values 'httpGet', 'tcpSocket'.
+                      type: httpGet
+                      # httpGet specifies the http request to perform.
+                      httpGet:
+                        # port is number or name of the port to access on the container.
+                        # Required.
+                        port: 8080
+                        # httpHeaders is headers to set in the request.
+                        # HTTP allows repeated headers.
+                        # Optioanl.
+                        httpHeaders:
+                          # - name:
+                          #   value:
+                        # path to access on the HTTP server.
+                        # Required.
+                        path: /
+                        # scheme to use for connecting to the host.
+                        # Defaults to 'HTTP'.
+                        # Optioanl.
+                        scheme: HTTP
+                      # tcpSocket specifies an action involving a TCP port.
+                      tcpSocket:
+                        # port is number or name of the port to access on the container.
+                        # Required.
+                        port:
+                      # periodSeconds is how often (in seconds) to perform the probe.
+                      # Minimum value is '1'.
+                      # Default to '10'.
+                      # Optioanl.
+                      periodSeconds: 10
+                      # timeoutSeconds Nis number of seconds after which the probe times out.
+                      # Minimum value is '1'.
+                      # Defaults to '1'.
+                      # Optioanl.
+                      timeoutSeconds: 2
+                      # failureThreshold is minimum consecutive failures for the probe to be considered failed after having succeeded.
+                      # Minimum value is '1'.
+                      # Defaults to '3'.
+                      # Optioanl.
+                      failureThreshold: 6
+                    # volumeMounts describes a mounting of a Volume within a container.
+                    # Optional.
+                    volumeMounts:
+                        # name is mount target of volumes.
+                        # Required.
+                      - name: test-workflow-volumes-1
+                        # mountPath is path within the container at which the volume should be mounted.
+                        # Must not contain ':'
+                        # Required.
+                        mountPath: /home
+                        # mountPropagation determines how mounts are propagated from the host to container and the other way around.
+                        # When not set, `MountPropagationNone` is used. This field is beta in 1.10.
+                        # When RecursiveReadOnly is set to `IfPossible` or to `Enabled`, MountPropagation must be `None` or `unspecified` (which defaults to None).
+                        # Optional.
+                        mountPropagation: ""
+                        # readOnly determines whether the volume will be mounted readonly.
+                        # Defaults to false.
+                        # Optional.
+                        readOnly:
+                        # recursiveReadOnly specifies whether read-only mounts should be handled recursively.
+                        # If readOnly is false, this field has no meaning and must be unspecified.
+                        # Optional.
+                        recursiveReadOnly: ""
+                        # subPath is path within the volume from which the container's volume should be mounted.
+                        # Defaults to "" (volume's root).
+                        # Optional.
+                        subPath: ""
+                        # subPathExpr is expanded path within the volume from which the container's volume should be mounted.
+                        # Behaves similarly to subPath but environment variable references $(VAR_NAME) are expanded using the container's environment.
+                        # subPathExpr and subPath are mutually exclusive.
+                        # Defaults to "" (volume's root).
+                        # Optional.
+                        subPathExpr: ""
+                - name: test-template-dag-1
+                  type: dag
+                  # dag is DAG template subtype which runs a DAG.
+                  dag:
+                    # failFast is flag for DAG logic. The DAG logic has a built-in "fail fast" feature to stop scheduling new steps, as soon as it detects that one of the DAG nodes is failed.
+                    # Then it waits until all DAG nodes are completed before failing the DAG itself.
+                    # The FailFast flag default is true, if set to false, it will allow a DAG to run all branches of the DAG to completion (either success or failure),
+                    # regardless of the failed outcomes of branches in the DAG.
+                    # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/dag/#fail-fast
+                    # Valid values 'true', 'false'
+                    # Defaults to 'false'.
+                    # Optional.
+                    failFast: false
+                    # target is one or more names of targets to execute in a DAG
+                    target: ""
+                    # tasks are a list of DAG tasks.
+                    # ref: https://argo-workflows.readthedocs.io/en/latest/workflow-concepts/#dag
+                    # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/dag/
+                    # Required.
+                    tasks:
+                        # name is the name of the target.
+                      - name: test-template-dag-1-task-1
+                        # templateRef is the reference to the template resource to execute.
+                        # Optional.
+                        templateRef:
+                          # clusterScope indicates the referred template is cluster scoped.
+                          clusterScope:
+                          # name is the resource name of the template.
+                          name:
+                          # template is the name of referred template in the resource.
+                          template:
+                        # template is template to execute.
+                        template: "test-template-container-1"
+                        # arguments are the parameter and artifact arguments to the template.
+                        # Optional.
+                        arguments:
+                          # parameters is the list of parameters to pass to the template or workflow.
+                          # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/parameters/
+                          # ref: https://argo-workflows.readthedocs.io/en/latest/workflow-templates/#working-with-parameters
+                          parameters:
+                              # name is the parameter name.
+                            - name: test-template-dag-1-tasks-1-parameter-1
+                              # description is the parameter description.
+                              description: "test template dag 1 tasks 1 parameter 1"
+                              # value is the literal value to use for the parameter.
+                              value: 1
+                              # enum holds a list of string values to choose from, for the actual value of the parameter.
+                              enum: [1, 2]
+                        # withItems expands a task into multiple parallel tasks from the items in the list.
+                        # withItems takes a list of things to work on. Either plain, single values, which are then usable in your template as '{{item}}'
+                        # or a JSON object where each element in the object can be addressed by it's key as '{{item.key}}'.
+                        # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/loops/#loops
+                        # Optional.
+                        withItems: []
+                        # withParam expands a task into multiple parallel tasks from the value in the parameter, which is expected to be a JSON list.
+                        # withParam takes a JSON array of items, and iterates over it - again the items can be objects like with withItems.
+                        # This is very powerful, as you can generate the JSON in another step in your workflow, so creating a dynamic workflow.
+                        # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/loops/#loops
+                        # Optional.
+                        withParam: ""
+                        # withSequence expands a task into a numeric sequence.
+                        # withSequence iterates over a sequence of numbers.
+                        # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/loops/#loops
+                        # Optional.
+                        withSequence:
+                          # count is number of elements in the sequence.
+                          # Not to be used with end.
+                          # Defaults to '0'.
+                          count: ""
+                          # start is number at which to start the sequence.
+                          # Defaults to '0'.
+                          start: ""
+                          # end is number at which to end the sequence.
+                          # Not to be used with Count.
+                          # Defaults to '0'.
+                          end: ""
+                          # format is a printf format string to format the value in the sequence.
+                          format: ""
+                        # continueOn defines if a workflow should continue even if a task or step fails/errors.
+                        # It can be specified if the workflow should continue when the pod errors, fails or both.
+                        # ref: https://argo-workflows.readthedocs.io/en/latest/enhanced-depends-logic/
+                        # Optional.
+                        continueOn:
+                          # Valid values 'true', 'false'
+                          error: false
+                          # Valid values 'true', 'false'
+                          failed: false
+                        # dependencies are name of other targets which this depends on.
+                        # ref: https://argo-workflows.readthedocs.io/en/latest/enhanced-depends-logic/
+                        # Optional.
+                        dependencies: []
+                        # depends are name of other targets which this depends on.
+                        # depends improves on the dependencies field by specifying which result of a task to depend on.
+                        # For example, to only run a task if its dependent task succeeded.
+                        # ref: https://argo-workflows.readthedocs.io/en/latest/enhanced-depends-logic/
+                        # Optional.
+                        depends: ""
+                        # whene is an expression in which the task should conditionally execute.
+                        # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/conditionals/
+                        # Optional.
+                        when: ""
+                        # hooks hold the lifecycle hook which is invoked at lifecycle of task, irrespective of the success, failure, or error status of the primary task.
+                        # Optional.
+                        hooks:
+                            # name is name of hook.
+                            # You must not name a 'exit' or it becomes an exit handler; otherwise the hook name has no relevance.
+                          - name: test-template-dag-1-tasks-1-hooks-1
+                            # expression is a condition expression for when a node will be retried.
+                            # If it evaluates to false, the node will not be retried and the retry strategy will be ignored.
+                            # Optional.
+                            expression: workflow.status == "Failed"
+                            # template is the name of the template to execute by the hook.
+                            # Optional.
+                            template: "test-template-container-1"
+                            # templateRef is the reference to the template resource to execute by the hook.
+                            # Optional.
+                            templateRef:
+                              # clusterScope indicates the referred template is cluster scoped.
+                              clusterScope:
+                              # name is the resource name of the template.
+                              name: ""
+                              # template is the name of referred template in the resource.
+                              template: ""
+                            # arguments contain the parameters and artifacts sent to the workflow entrypoint.
+                            # Parameters are referencable globally using the 'workflow' variable prefix.
+                            # Optional.
+                            arguments:
+                              # parameters is the list of parameters to pass to the template or workflow.
+                              # ref: https://argo-workflows.readthedocs.io/en/latest/walk-through/parameters/
+                              # ref: https://argo-workflows.readthedocs.io/en/latest/workflow-templates/#working-with-parameters
+                              parameters:
+                                  # name is the parameter name.
+                                - name: test-template-dag-1-tasks-1-hooks-1-arguments-parameter-1
+                                  # description is the parameter description.
+                                  description: "test template dag 1 tasks 1 hooks 1 arguments parameter 1"
+                                  # value is the literal value to use for the parameter.
+                                  value: 1
+                                  # enum holds a list of string values to choose from, for the actual value of the parameter.
+                                  enum: [1, 2]
+              # workflowTemplateRef holds a reference to a WorkflowTemplate for execution.
+              # ref: https://argo-workflows.readthedocs.io/en/latest/cluster-workflow-templates/#create-workflow-from-clusterworkflowtemplate-spec
+              # ref: https://argo-workflows.readthedocs.io/en/latest/workflow-templates/#create-workflow-from-workflowtemplate-spec
+              # Optional.
+              workflowTemplateRef:
+                # indicates the referred template is cluster scoped (i.e. a ClusterWorkflowTemplate).
+                clusterScope: false
+                # name is the resource name of the workflow template.
+                name: ""
+              # volumeClaimGC describes the strategy to use when deleting volumes from completed workflows.
+              # Optional.
+              volumeClaimGC:
+                # strategy is the strategy to use.
+                # Valid values 'OnWorkflowCompletion', 'OnWorkflowSuccess'.
+                # Defaults to 'OnWorkflowSuccess'.
+                strategy: OnWorkflowCompletion
+              # volumes is list that can be mounted by containers belonging to the pod.
+              # Optional.
+              volumes:
+                  # name is unique within the pod.
+                  # Required.
+                - name: test-workflow-volumes-1
+                  # type specifies which types of volume will be created.
+                  # Valid values `emptyDir`.
+                  # Required.
+                  type: emptyDir
+                  # emptyDir represents a temporary directory that shares a pod's lifetime.
+                  emptyDir:
+                    # medium represents what type of storage medium should back this directory.
+                    # Must be an empty string (default) or Memory.
+                    # The default is "" which means to use the node's default medium.
+                    # Optioanl.
+                    medium: ""
+                    # sizeLimit is the total amount of local storage required for this EmptyDir volume.
+                    # The size limit is also applicable for memory medium.
+                    # The maximum usage on memory medium EmptyDir would be the minimum value between the SizeLimit specified here and the sum of memory limits of all containers in a pod.
+                    # The default is nil which means that the limit is undefined.
+                    # Optioanl.
+                    sizeLimit: 100Mi
+
+    # hpa(HorizontalPodAutoscaler) is the configuration for a horizontal pod autoscaler,
+    # which automatically manages the replica count of any resource implementing the scale subresource based on the metrics specified.
+    # ref: https://v1-27.docs.kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/
+    hpa:
+      enabled: false
+      # labels is labels map.
+      # Optional.
+      labels: {}
+      # labelsTemplate is labels map.
+      # This field is rendered through the Helm tpl function.
+      # Optional.
+      labelsTemplate: ""
+      # annotations is labels map.
+      # Optional.
+      annotations: {}
+      # annotationsTemplate is labels map.
+      # This field is rendered through the Helm tpl function.
+      # Optional.
+      annotationsTemplate: ""
+      # minReplica is the lower limit for the number of replicas to which the autoscaler can scale down po.
+      # minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured.
+      # Scaling is active as long as at least one metric value is available.
+      # Defaults to '1'.
+      # Optional.
+      minReplica: 1
+      # maxReplica is the upper limit for the number of replicas to which the autoscaler can scale up po.
+      # It cannot be less that minReplica.
+      # Required.
+      maxReplica:
+      # behavior configures the scaling behavior of the target in both Up and Down directions (scaleUp and scaleDown fields respectively).
+      # If not set, the default HPAScalingRules for scale up and scale down are used.
+      # ref: https://v1-24.docs.kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#default-behavior
+      # Optional.
+      behavior:
+        scaleDown:
+          # selectPolicy is used to specify which policy should be used.
+          # Defaults to 'Max'dddd.
+          # Optional.
+          selectPolicy: Max
+          # stabilizationWindowSeconds is the number of seconds for which past recommendations should be considered while scaling up or scaling down.
+          # It must be greater than or equal to zero and less than or equal to 3600 (one hour).
+          # Defaults to '300'
+          # Optional.
+          stabilizationWindowSeconds: 300
+          # policies is a list of potential scaling polices which can be used during scaling.
+          # Optional.
+          policies:
+              # type is used to specify the scaling policy.
+              # Required.
+            - type: Percent
+              # value contains the amount of change which is permitted by the policy.
+              # It must be greater than zero.
+              # Required.
+              value: 100
+              # periodSeconds specifies the window of time for which the policy should hold true.
+              # It must be greater than zero and less than or equal to 1800 (30 min).
+              # Required.
+              periodSeconds: 15
+        scaleUp:
+          # selectPolicy is used to specify which policy should be used.
+          # Defaults to 'Max'.
+          # Optional.
+          selectPolicy: Max
+          # stabilizationWindowSeconds is the number of seconds for which past recommendations should be considered while scaling up or scaling down.
+          # It must be greater than or equal to zero and less than or equal to 3600 (one hour).
+          # Defaults to '0'
+          # Optional.
+          stabilizationWindowSeconds: 0
+          # policies is a list of potential scaling polices which can be used during scaling.
+          # Optional.
+          policies:
+              # type is used to specify the scaling policy.
+              # Required.
+            - type: Percent
+              # value contains the amount of change which is permitted by the policy.
+              # It must be greater than zero.
+              # Required.
+              value: 100
+              # periodSeconds specifies the window of time for which the policy should hold true.
+              # It must be greater than zero and less than or equal to 1800 (30 min).
+              # Required.
+              periodSeconds: 15
+            - type: Pods
+              value: 4
+              periodSeconds: 15
+      # metrics contains the specifications for which to use to calculate the desired replica count (the maximum replica count across all metrics will be used).
+      # The desired replica count is calculated multiplying the ratio between the target value and the current value by the current number of po.
+      # Ergo, metrics used must decrease as the po count is increased, and vice-versa.
+      # Required.
+      metrics:
+          # type is the type of metric source.
+          # 'ContainerResource' refers to a resource metric (such as those specified in requests and limits)
+          # known to k8s describing a single container in each pod of the current scale target (e.g. CPU or memory).
+          # Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-po metrics using the "pods" source.
+          # This is an alpha feature and can be enabled by the HPAContainerMetrics feature flag.
+          # Valid values 'ContainerResource', 'External', 'Object', 'Pods', 'Resource'.
+          # Required.
+        - type: ContainerResource
+          # metric is the name of the resource.
+          # Valid values 'cpu', 'memory'.
+          # Required.
+          metric:
+          target:
+            # type represents resource metric type.
+            # 'AverageValue' is only valid for 'Resource' type.
+            # Valid values 'Utilization',AverageValue', 'Value'.
+            # Required.
+            type:
+            # averageUtilization is the target value of the average of the resource metric across all relevant po,
+            # represented as a percentage of the requested value of the resource for the po.
+            # Currently only valid for 'Resource' metric source type.
+            # Required.
+            averageUtilization:
+            # averageValue is the target value of the average of the metric across all relevant po (as a quantity).
+            # Required.
+            averageValue:
+            # value is the target value of the metric (as a quantity).
+            # Required.
+            value:
+          # type is the type of metric source.
+          # Valid values 'ContainerResource', 'External', 'Object', 'Pods', 'Resource'.
+          # 'External' refers to a global metric that is not associated with any k8s object.
+          # It allows autoscaling based on information coming from components running outside of cluster.
+          # For example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster.
+          # Required.
+        - type: External
+          # metric identifies the target metric by name and selector.
+          # Required.
+          metric:
+            # query is a external metric query.
+            # Required.
+            query:
+            # crd(Custom Resource Definition) is a k8s crd resource for external metric query.
+            # When enabled, metric query is defined in crd.
+            crd:
+              enabled: false
+              # type is a k8s crd kind.
+              # Valid values 'DatadogMetric'.
+              type:
+              # order is just used to naming metric query CRD.
+              order:
+              # labels is labels map.
+              # Optional.
+              labels: {}
+              # labelsTemplate is labels map.
+              # This field is rendered through the Helm tpl function.
+              # Optional.
+              labelsTemplate: ""
+              # annotations is labels map.
+              # Optional.
+              annotations: {}
+              # annotationsTemplate is labels map.
+              # This field is rendered through the Helm tpl function.
+              # Optional.
+              annotationsTemplate: ""
+            # selector is the string-encoded form of a standard k8s label selector for the given metric.
+            # When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping.
+            # When unset, just the metricName will be used to gather metrics.
+            # If metric.crd.enabled is true, selector will be ignored.
+            # Optional.
+            selector:
+              enabled: false
+              # type is label selector type.
+              # Valid values 'matchExpressions', 'matchLabels'.
+              type:
+              # matchExpressions is a list of label selector requirements.
+              # The requirements are ANDed.
+              matchExpressions:
+                  # key is the label key that the selector applies to.
+                  # Required.
+                - key:
+                  # operator represents a key's relationship to a set of values.
+                  # Valid values 'In', 'NotIn', 'Exists', 'DoesNotExist'.
+                  # Required.
+                  operator:
+                  # values is an array of string values.
+                  # If the operator is 'In' or 'NotIn', the values array must be non-empty.
+                  # If the operator is 'Exists' or 'DoesNotExist', the values array must be empty.
+                  # This array is replaced during a strategic merge patch.
+                  # Optional.
+                  values: []
+              # matchLabels is a map of {key,value} pairs.
+              # A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions,
+              # whose key field is "key", the operator is "In", and the values array contains only "value".
+              # The requirements are ANDed.
+              # Required.
+              matchLabels: {}
+          target:
+            # type represents resource metric type.
+            # 'AverageValue' is only valid for 'Resource' type.
+            # Valid values 'Utilization',AverageValue', 'Value'.
+            # Required.
+            type:
+            # averageUtilization is the target value of the average of the resource metric across all relevant po,
+            # represented as a percentage of the requested value of the resource for the po.
+            # Currently only valid for 'Resource' metric source type.
+            # Required.
+            averageUtilization:
+            # averageValue is the target value of the average of the metric across all relevant po (as a quantity).
+            # Required.
+            averageValue:
+            # value is the target value of the metric (as a quantity).
+            # Required.
+            value:
+          # type is the type of metric source.
+          # Valid values 'ContainerResource', 'External', 'Object', 'Pods', 'Resource'.
+          # 'Object' refers to a metric describing a single k8s object.
+          # For example, hits-per-second on an ing object.
+        - type: Object
+          # object specifies the descriptions of a object,such as kind,name apiVersion.
+          object:
+            apiVersion:
+            kind:
+            name:
+          # metric identifies the target metric by name and selector.
+          # Required.
+          metric:
+            # name is the name of the given metric.
+            # Required.
+            name:
+            # selector is the string-encoded form of a standard k8s label selector for the given metric.
+            # When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping.
+            # When unset, just the metricName will be used to gather metrics.
+            # Optional.
+            selector:
+              enabled: false
+              # type is label selector type.
+              # Valid values 'matchExpressions', 'matchLabels'.
+              type:
+              # matchExpressions is a list of label selector requirements.
+              # The requirements are ANDed.
+              matchExpressions:
+                  # key is the label key that the selector applies to.
+                  # Required.
+                - key:
+                  # operator represents a key's relationship to a set of values.
+                  # Valid values 'In', 'NotIn', 'Exists', 'DoesNotExist'.
+                  # Required.
+                  operator:
+                  # values is an array of string values.
+                  # If the operator is 'In' or 'NotIn', the values array must be non-empty.
+                  # If the operator is 'Exists' or 'DoesNotExist', the values array must be empty.
+                  # This array is replaced during a strategic merge patch.
+                  # Optional.
+                  values: []
+              # matchLabels is a map of {key,value} pairs.
+              # A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions,
+              # whose key field is "key", the operator is "In", and the values array contains only "value".
+              # The requirements are ANDed.
+              # Required.
+              matchLabels: {}
+          target:
+            # type represents resource metric type.
+            # 'AverageValue' is only valid for 'Resource' type.
+            # Valid values 'Utilization',AverageValue', 'Value'.
+            # Required.
+            type:
+            # averageUtilization is the target value of the average of the resource metric across all relevant po,
+            # represented as a percentage of the requested value of the resource for the po.
+            # Currently only valid for 'Resource' metric source type.
+            # Required.
+            averageUtilization:
+            # averageValue is the target value of the average of the metric across all relevant po (as a quantity).
+            # Required.
+            averageValue:
+            # value is the target value of the metric (as a quantity).
+            # Required.
+            value:
+          # type is the type of metric source.
+          # Valid values 'ContainerResource', 'External', 'Object', 'Pods', 'Resource'.
+          # 'Pods' refers to a metric describing each po in the current scale target.
+          # For example, transactions-processed-per-second.
+          # The values will be averaged together before being compared to the target value.
+        - type: Pods
+          # metric identifies the target metric by name and selector.
+          # Required.
+          metric:
+            # name is the name of the given metric.
+            # Required.
+            name:
+            # selector is the string-encoded form of a standard k8s label selector for the given metric.
+            # When set, it is passed as an additional parameter to the metrics server for more specific metrics scoping.
+            # When unset, just the metricName will be used to gather metrics.
+            # Optional.
+            selector:
+              enabled: false
+              # type is label selector type.
+              # Valid values 'matchExpressions', 'matchLabels'.
+              type:
+              # matchExpressions is a list of label selector requirements.
+              # The requirements are ANDed.
+              matchExpressions:
+                  # key is the label key that the selector applies to.
+                  # Required.
+                - key:
+                  # operator represents a key's relationship to a set of values.
+                  # Valid values 'In', 'NotIn', 'Exists', 'DoesNotExist'.
+                  # Required.
+                  operator:
+                  # values is an array of string values.
+                  # If the operator is 'In' or 'NotIn', the values array must be non-empty.
+                  # If the operator is 'Exists' or 'DoesNotExist', the values array must be empty.
+                  # This array is replaced during a strategic merge patch.
+                  # Optional.
+                  values: []
+              # matchLabels is a map of {key,value} pairs.
+              # A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions,
+              # whose key field is "key", the operator is "In", and the values array contains only "value".
+              # The requirements are ANDed.
+              # Required.
+              matchLabels: {}
+          target:
+            # type represents resource metric type.
+            # 'AverageValue' is only valid for 'Resource' type.
+            # Valid values 'Utilization',AverageValue', 'Value'.
+            # Required.
+            type:
+            # averageUtilization is the target value of the average of the resource metric across all relevant po,
+            # represented as a percentage of the requested value of the resource for the po.
+            # Currently only valid for 'Resource' metric source type.
+            # Required.
+            averageUtilization:
+            # averageValue is the target value of the average of the metric across all relevant po (as a quantity).
+            # Required.
+            averageValue:
+            # value is the target value of the metric (as a quantity).
+            # Required.
+            value:
+          # type is the type of metric source.
+          # Valid values 'ContainerResource', 'External', 'Object', 'Pods', 'Resource'.
+          # 'Resource' refers to a resource metric (such as those specified in requests and limits)
+          # known to k8s describing each po in the current scale target (e.g. CPU or memory).
+          # Such metrics are built in to k8s, and have special scaling options on top of those available to normal per-po metrics using the "pods" source.
+        - type: Resource
+          # metric is the name of the resource.
+          # Valid values 'cpu', 'memory'.
+          # Required.
+          metric: cpu
+          target:
+            # type represents resource metric type.
+            # 'AverageValue' is only valid for 'Resource' type.
+            # Valid values 'Utilization', 'AverageValue', 'Value'.
+            # Required.
+            type: Utilization
+            # averageUtilization is the target value of the average of the resource metric across all relevant po,
+            # represented as a percentage of the requested value of the resource for the po.
+            # Currently only valid for 'Resource' metric source type.
+            # Required.
+            averageUtilization: 50
+            # averageValue is the target value of the average of the metric across all relevant po (as a quantity).
+            # Required.
+            averageValue:
+            # value is the target value of the metric (as a quantity).
+            # Required.
+            value:
+  
+    # ing(Ingress) is a collection of rules that allow inbound connections to reach the endpoints defined by a backend.
+    # Now only support AWS alb.
+    # ref: https://v1-27.docs.kubernetes.io/docs/reference/kubernetes-api/service-resources/ingress-v1/
+    # ref: https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.5/guide/ingress/annotations/
+    ing:
+      # private defines internal scheme AWS alb.
+      private:
+        enabled: false
+        # labels is labels map.
+        # Optional.
+        labels: {}
+        # labelsTemplate is labels map.
+        # This field is rendered through the Helm tpl function.
+        # Optional.
+        labelsTemplate: ""
+        # annotations is labels map.
+        # Optional.
+        annotations: {}
+        # annotationsTemplate is labels map.
+        # This field is rendered through the Helm tpl function.
+        # Optional.
+        annotationsTemplate: ""
+        # className is the name of an k8s ic(IngressClass) resource.
+        # without an className field specified will be assigned this default ic.
+        # Required.
+        className: alb
+        # name specifies the custom name to use for the AWS alb.
+        # longer than 32 characters will be treated as an error.
+        # Required.
+        name:
+        # actions provides a method for configuring custom actions on a listener, such as Redirect Actions.
+        # The action-name in the annotation must match the ing .spec.rules[*].http.paths[*].backend.service.name field,
+        # and .spec.rules[*].http.paths[*].backend.service.port.name field must be 'use-annotation'.
+        # ref: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html#rule-action-types
+        # Optional.
+        actions: {}
+        # conditions provides a method for specifying routing conditions in addition to original host/path condition on ing .spec.rules[*].
+        # The conditions-name in the annotation must match the ing .spec.rules[*].http.paths[*].backend.service.name field.
+        # It can be a either real svc name or an annotation based action name
+        # when .spec.rules[*].http.paths[*].backend.service.port.name field is 'use-annotation'.
+        # ref: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html#rule-condition-types
+        # Optional.
+        conditions: {}
+        # attributes specifies AWS alb attributes.
+        # ref: https://docs.aws.amazon.com/elasticloadbalancing/latest/APIReference/API_LoadBalancerAttribute.html
+        # Optional.
+        attributes: deletion_protection.enabled=false, load_balancing.cross_zone.enabled=true, idle_timeout.timeout_seconds=60, access_logs.s3.enabled=false
+        # tags specifies additional tags that will be applied to AWS alb created.
+        # Optional.
+        tags:
+        # wafAclID specifies the identifier for the AWS WAF web ACL.
+        # Optional.
+        wafAclID:
+        # wafv2AclID specifies ARN for the AWS WAFv2 web ACL.
+        # Optional.
+        wafv2AclID:
+        # shieldAdvancedProtection turns on / off the AWS Shield Advanced protection for the alb.
+        # Optional.
+        shieldAdvancedProtection:
+        ip:
+          # type specifies the IP address type of AWS alb.
+          # Valid values 'ipv4', 'dualstack'.
+          # Defaults to 'ipv4'.
+          # Optional.
+          type: ipv4
+          # ipv4Pool specifies the customer-owned IPv4 address pool for ALB on outpost.
+          # This annotation should be treated as immutable.
+          # To remove or change coIPv4Pool, you need to recreate Ingress.
+          # Optional.
+          ipv4Pool:
+          # subnets specifies the AZ(Availability Zones) that the aws alb will route traffic to.
+          # You must specify at least two subnets in different AZs.
+          # Either subnetID or subnetName(Name tag on subnets) can be used.
+          # You can enable subnet auto discovery to avoid specifying this annotation on every ing.
+          # Optional.
+          subnets:
+          # sourceRanges specifies the CIDRs that are allowed to access AWS alb.
+          # Will be ignored if alb.ingress.kubernetes.io/security-groups is specified.
+          # Defaults to 0.0.0.0/0, if the IPAddressType is 'ipv4'.
+          # Defaults to 0.0.0.0/0 and ::/0, if the IPAddressType is 'dualstack'.
+          # Optional.
+          sourceRanges:
+          # frontendSecurigyGroups specifies the securityGroups you want to attach to AWS alb.
+          # When this annotation is not present, the controller will automatically create one security group,
+          # the security group will be attached to the AWS alb and allow access from inbound-cidrs to the listen-ports.
+          # Also, the securityGroups for no/po will be modified to allow inbound traffic from this securityGroup.
+          # If you specify this annotation, you need to configure the security groups on your no/po to allow inbound traffic from the AWS alb.
+          # You could also set the backendSecurityGroupManaged if you want the controller to manage the access rules.
+          # Optional.
+          frontendSecurityGroups:
+          # backendSecurityGroupManaged specifies whether you want the controller to configure security group rules
+          # on no/po for traffic access when you specify frontendSecurityGroups.
+          # This annotation applies only in case you specify the security groups via frontendSecurityGroups.
+          # If set to true, controller attaches an additional shared backend security group to your load balancer.
+          # This backend security group is used in the no/po security group rules.
+          # Optional.
+          backendSecurityGroupManaged: true
+        listener:
+          # ports specifies the ports that AWS alb listens on.
+          # You can define multiple ports for smae protocol.
+          # Defaults to '[{"HTTP": 80}] or '[{"HTTPS": 443}]' depending on whether tls is enabled.
+          # Required.
+          ports:
+            - HTTP: 80
+            - HTTPS: 443
+          tls:
+            enabled: false
+            # redirectPort enables SSLRedirect and specifies the SSL port that redirects to.
+            # Once enabled SSLRedirect, every HTTP listener will be configured with a default action which redirects to HTTPS, other rules will be ignored.
+            # The SSL port that redirects to must exists on AWS alb.
+            # Required.
+            redirectPort: 443
+            # certARN specifies the ARN of one or more certificate managed by AWS Certificate Manager.
+            # The first certificate in the list will be added as default certificate.
+            # And remaining certificate will be added to the optional certificate list.
+            # if you specify this field, controller will attempt to discover TLS certificates from the tls field in ing and .spec.rules[*].host field in ing.
+            # Optional.
+            certARN:
+            # policy specifies the Security Policy that should be assigned to the AWS alb, allowing you to control the protocol and ciphers.
+            # ref: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html#describe-ssl-policies
+            # Required.
+            policy: ELBSecurityPolicy-TLS13-1-2-2021-06
+        defaultRule:
+          enabled: false
+          svc:
+            # name is the referenced service.
+            # The service must exist in the same namespace as the ing object.
+            # Required.
+            name:
+            # portName is the name of the port on the svc.
+            # Required.
+            portName:
+        target:
+            # order specifies the order across all ing within IngressGroup.
+            # You can explicitly denote the order using a number between -1000 and 1000.
+            # The smaller the order, the rule will be evaluated first.
+            # Required.
+          - order: 1
+            # type pecifies how to route traffic to po.
+            # 'instance' mode will route traffic to all ec2 instances within cluster on NodePort opened for your svc.
+            # 'ip' mode will route traffic directly to the po IP.
+            # Valid values 'instance', 'ip'.
+            # Defaults to 'instance'.
+            # Optional.
+            type: ip
+            # nodeLabels specifies which no to include in the target group registration for instance target type.
+            # Optional.
+            nodeLabels:
+            # protocol specifies the protocol used when route traffic to po.
+            # Valid values 'HTTP', 'HTTPS'.
+            # Defaults to 'HTTP'.
+            # Optional.
+            protocol: HTTP
+            # protocolVersion specifies the application protocol used to route traffic to po.
+            # Only valid when HTTP or HTTPS is used as the backend protocol.
+            # Defaults to 'HTTP1'
+            # Optional.
+            protocolVersion: HTTP1
+            # attributes specifies Target Group Attributes which should be applied to Target Groups.
+            # ref: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html#target-group-attributes
+            # Optional.
+            attributes: deregistration_delay.timeout_seconds=120, load_balancing.algorithm.type=round_robin, slow_start.duration_seconds=0, stickiness.enabled=false
+            rules:
+                # host is the fully qualified domain name of a network host, as defined by RFC 3986.
+                # Optional.
+              - host:
+                paths:
+                    # path is matched against the path of an incoming request.
+                    # Required.
+                  - path:
+                    # type determines the interpretation of the path matching.
+                    # Valid values 'Exact', 'Prefix'.
+                    # Required.
+                    type:
+                    svc:
+                      # name is the referenced svc.
+                      # The svc must exist in the same ns as the ing object.
+                      # Required.
+                      name:
+                      # portName is the name of the port on the svc.
+                      # It must be an IANA_SVC_NAME and unique within the po.
+                      # Required.
+                      portName: http
+            healthCheck:
+              # protocol specifies the protocol used when performing health check on targets.
+              # Valid values 'HTTPS', 'HTTP'.
+              # Defaults to 'HTTP'.
+              # Optional.
+              protocol: HTTP
+              # port specifies the port used when performing health check on targets.
+              # Defaults to 'traffic-port'.
+              # Optional.
+              port: traffic-port
+              # path specifies the HTTP path when performing health check on targets.
+              # Optional.
+              path:
+              # interval specifies the interval(in seconds) between health check of an individual target.
+              # Defaults to '15'.
+              # Optional.
+              interval:
+              # timeout specifies the timeout(in seconds) during which no response from a target means a failed health check.
+              # Defaults to '5'.
+              # Optional.
+              timeout:
+              # successCode specifies the HTTP or gRPC status code that should be expected when doing health checks against the specified health check path.
+              # Defaults to '200', '12'.
+              # Optional.
+              successCode:
+              # healthyThreshold specifies the consecutive health checks successes required before considering an unhealthy target healthy.
+              # Defaults to '2'.
+              # Optional.
+              healthyThreshold:
+              # unhealthyThreshold specifies the consecutive health check failures required before considering a target unhealthy.
+              # Defaults to '2'.
+              # Optional.
+              unhealthyThreshold:
+      # public defines internet-facing scheme AWS alb.
+      public:
+        enabled: false
+        # labels is labels map.
+        # Optional.
+        labels: {}
+        # labelsTemplate is labels map.
+        # This field is rendered through the Helm tpl function.
+        # Optional.
+        labelsTemplate: ""
+        # annotations is labels map.
+        # Optional.
+        annotations: {}
+        # annotationsTemplate is labels map.
+        # This field is rendered through the Helm tpl function.
+        # Optional.
+        annotationsTemplate: ""
+        # className is the name of an k8s ic(IngressClass) resource.
+        # without an className field specified will be assigned this default ic.
+        # Required.
+        className: alb
+        # name specifies the custom name to use for the AWS alb.
+        # longer than 32 characters will be treated as an error.
+        # Required.
+        name:
+        # actions provides a method for configuring custom actions on a listener, such as Redirect Actions.
+        # The action-name in the annotation must match the ing .spec.rules[*].http.paths[*].backend.service.name field,
+        # and .spec.rules[*].http.paths[*].backend.service.port.name field must be 'use-annotation'.
+        # ref: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html#rule-action-types
+        # Optional.
+        actions: {}
+        # conditions provides a method for specifying routing conditions in addition to original host/path condition on ing .spec.rules[*].
+        # The conditions-name in the annotation must match the ing .spec.rules[*].http.paths[*].backend.service.name field.
+        # It can be a either real svc name or an annotation based action name
+        # when .spec.rules[*].http.paths[*].backend.service.port.name field is 'use-annotation'.
+        # ref: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html#rule-condition-types
+        # Optional.
+        conditions: {}
+        # attributes specifies AWS alb attributes.
+        # ref: https://docs.aws.amazon.com/elasticloadbalancing/latest/APIReference/API_LoadBalancerAttribute.html
+        # Optional.
+        attributes: deletion_protection.enabled=false, load_balancing.cross_zone.enabled=true, idle_timeout.timeout_seconds=60, access_logs.s3.enabled=false
+        # tags specifies additional tags that will be applied to AWS alb created.
+        # Optional.
+        tags:
+        # wafAclID specifies the identifier for the AWS WAF web ACL.
+        # Optional.
+        wafAclID:
+        # wafv2AclID specifies ARN for the AWS WAFv2 web ACL.
+        # Optional.
+        wafv2AclID:
+        # shieldAdvancedProtection turns on / off the AWS Shield Advanced protection for the alb.
+        # Optional.
+        shieldAdvancedProtection:
+        ip:
+          # type specifies the IP address type of AWS alb.
+          # Valid values 'ipv4', 'dualstack'.
+          # Defaults to 'ipv4'.
+          # Optional.
+          type: ipv4
+          # ipv4Pool specifies the customer-owned IPv4 address pool for ALB on outpost.
+          # This annotation should be treated as immutable.
+          # To remove or change coIPv4Pool, you need to recreate Ingress.
+          # Optional.
+          ipv4Pool:
+          # subnets specifies the AZ(Availability Zones) that the aws alb will route traffic to.
+          # You must specify at least two subnets in different AZs.
+          # Either subnetID or subnetName(Name tag on subnets) can be used.
+          # You can enable subnet auto discovery to avoid specifying this annotation on every ing.
+          # Optional.
+          subnets:
+          # sourceRanges specifies the CIDRs that are allowed to access AWS alb.
+          # Will be ignored if alb.ingress.kubernetes.io/security-groups is specified.
+          # Defaults to 0.0.0.0/0, if the IPAddressType is 'ipv4'.
+          # Defaults to 0.0.0.0/0 and ::/0, if the IPAddressType is 'dualstack'.
+          # Optional.
+          sourceRanges:
+          # frontendSecurigyGroups specifies the securityGroups you want to attach to AWS alb.
+          # When this annotation is not present, the controller will automatically create one security group,
+          # the security group will be attached to the AWS alb and allow access from inbound-cidrs to the listen-ports.
+          # Also, the securityGroups for no/po will be modified to allow inbound traffic from this securityGroup.
+          # If you specify this annotation, you need to configure the security groups on your no/po to allow inbound traffic from the AWS alb.
+          # You could also set the backendSecurityGroupManaged if you want the controller to manage the access rules.
+          # Optional.
+          frontendSecurityGroups:
+          # backendSecurityGroupManaged specifies whether you want the controller to configure security group rules
+          # on no/po for traffic access when you specify frontendSecurityGroups.
+          # This annotation applies only in case you specify the security groups via frontendSecurityGroups.
+          # If set to true, controller attaches an additional shared backend security group to your load balancer.
+          # This backend security group is used in the no/po security group rules.
+          # Optional.
+          backendSecurityGroupManaged: true
+        listener:
+          # ports specifies the ports that AWS alb listens on.
+          # You can define multiple ports for smae protocol.
+          # Defaults to '[{"HTTP": 80}] or '[{"HTTPS": 443}]' depending on whether tls is enabled.
+          # Required.
+          ports:
+            - HTTP: 80
+            - HTTPS: 443
+          tls:
+            enabled: false
+            # redirectPort enables SSLRedirect and specifies the SSL port that redirects to.
+            # Once enabled SSLRedirect, every HTTP listener will be configured with a default action which redirects to HTTPS, other rules will be ignored.
+            # The SSL port that redirects to must exists on AWS alb.
+            # Optional.
+            redirectPort: 443
+            # certARN specifies the ARN of one or more certificate managed by AWS Certificate Manager.
+            # The first certificate in the list will be added as default certificate.
+            # And remaining certificate will be added to the optional certificate list.
+            # Required.
+            certARN:
+            # policy specifies the Security Policy that should be assigned to the AWS alb, allowing you to control the protocol and ciphers.
+            # ref: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html#describe-ssl-policies
+            # Required.
+            policy: ELBSecurityPolicy-TLS13-1-2-2021-06
+        defaultRule:
+          enabled: false
+          svc:
+            # name is the referenced service.
+            # The service must exist in the same namespace as the ing object.
+            # Required.
+            name:
+            # portName is the name of the port on the svc.
+            # Required.
+            portName:
+        target:
+            # order specifies the order across all ing within IngressGroup.
+            # You can explicitly denote the order using a number between -1000 and 1000.
+            # The smaller the order, the rule will be evaluated first.
+            # All ing without an explicit order setting get order value as 0.
+            # Rules with the same order are sorted lexicographically by the ing's namespace/name.
+            # Required.
+          - order: 1
+            # type pecifies how to route traffic to po.
+            # 'instance' mode will route traffic to all ec2 instances within cluster on NodePort opened for your svc.
+            # 'ip' mode will route traffic directly to the po IP.
+            # Valid values 'instance', 'ip'.
+            # Defaults to 'instance'.
+            # Optional.
+            type: ip
+            # nodeLabels specifies which no to include in the target group registration for instance target type.
+            # Optional.
+            nodeLabels:
+            # protocol specifies the protocol used when route traffic to po.
+            # Valid values 'HTTP', 'HTTPS'.
+            # Defaults to 'HTTP'.
+            # Optional.
+            protocol: HTTP
+            # protocolVersion specifies the application protocol used to route traffic to po.
+            # Only valid when HTTP or HTTPS is used as the backend protocol.
+            # Defaults to 'HTTP1'
+            # Optional.
+            protocolVersion: HTTP1
+            # attributes specifies Target Group Attributes which should be applied to Target Groups.
+            # ref: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html#target-group-attributes
+            # Optional.
+            attributes: deregistration_delay.timeout_seconds=120, load_balancing.algorithm.type=round_robin, slow_start.duration_seconds=0, stickiness.enabled=false
+            rules:
+                # host is the fully qualified domain name of a network host, as defined by RFC 3986.
+                # Required.
+              - host:
+                paths:
+                    # path is matched against the path of an incoming request.
+                    # Required.
+                  - path:
+                    # type determines the interpretation of the path matching.
+                    # Valid values 'Exact', 'Prefix'.
+                    # Required.
+                    type:
+                    svc:
+                      # name is the referenced svc.
+                      # The svc must exist in the same ns as the ing object.
+                      # Required.
+                      name:
+                      # portName is the name of the port on the svc.
+                      # It must be an IANA_SVC_NAME and unique within the po.
+                      # Required.
+                      portName: http
+            healthCheck:
+              # protocol specifies the protocol used when performing health check on targets.
+              # Valid values 'HTTPS', 'HTTP'.
+              # Defaults to 'HTTP'.
+              # Optional.
+              protocol: HTTP
+              # port specifies the port used when performing health check on targets.
+              # Defaults to 'traffic-port'.
+              # Optional.
+              port: traffic-port
+              # path specifies the HTTP path when performing health check on targets.
+              # Optional.
+              path:
+              # interval specifies the interval(in seconds) between health check of an individual target.
+              # Defaults to '15'.
+              # Optional.
+              interval:
+              # timeout specifies the timeout(in seconds) during which no response from a target means a failed health check.
+              # Defaults to '5'.
+              # Optional.
+              timeout:
+              # successCode specifies the HTTP or gRPC status code that should be expected when doing health checks against the specified health check path.
+              # Defaults to '200', '12'.
+              # Optional.
+              successCode:
+              # healthyThreshold specifies the consecutive health checks successes required before considering an unhealthy target healthy.
+              # Defaults to '2'.
+              # Optional.
+              healthyThreshold:
+              # unhealthyThreshold specifies the consecutive health check failures required before considering a target unhealthy.
+              # Defaults to '2'.
+              # Optional.
+              unhealthyThreshold:
+  
+    # pv(PersistentVolume) is a storage resource provisioned by an administrator.
+    # pvc(PersistentVolumeClaim) is a user's request for and claim to a persistent volume.
+    # Now only support static pv with AWS efs backend storage.
+    # pv ref: https://v1-27.docs.kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-v1/
+    # pvc ref: https://v1-27.docs.kubernetes.io/docs/reference/kubernetes-api/config-and-storage-resources/persistent-volume-claim-v1/
+    pv:
+      enabled: false
+      # labels is labels map.
+      # Optional.
+      labels: {}
+      # labelsTemplate is labels map.
+      # This field is rendered through the Helm tpl function.
+      # Optional.
+      labelsTemplate: ""
+      # annotations is labels map.
+      # Optional.
+      annotations: {}
+      # annotationsTemplate is labels map.
+      # This field is rendered through the Helm tpl function.
+      # Optional.
+      annotationsTemplate: ""
+      # acccessMode contains all ways the volume can be mounted.
+      # Valid values 'ReadWriteOnce','ReadWriteMany' for AWS efs csi driver.
+      # ref: https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/7d0b76bca26f7e0c258f3cdc68286aacffbfe5b3/pkg/driver/node.go#LL36C3-L37C3
+      # Required.
+      accessMode:
+        - ReadWriteOnce
+      # size is the description of the pv's size.
+      # size is ignored by the AWS efs csi driver because AWS efs is an efs.
+      # The actual storage size value in pv and pvc isn't used when creating the file system.
+      # However, because storage size is a required field in k8s, you must specify a valid value.
+      # This value doesn't limit the size of your AWS efs file system.
+      # Required.
+      size: 1Mi
+      # mountOptions is the list of mount options.
+      # Defaults to 'tls' for AWS efs csi driver.
+      # ref: https://github.com/kubernetes-sigs/aws-efs-csi-driver/tree/master#encryption-in-transit
+      # Optional.
+      mountOptions: []
+      # reclaimPolicy defines what happens to a pv when released from its pvc.
+      # Valid values 'Retain (default for manually created(static) pv)', 'Delete (default for dynamically provisioned pv)'
+      # Required.
+      reclaimPolicy: Retain
+      # volumeMode defines if a volume is intended to be used with a formatted filesystem or to remain in raw block state.
+      # Valid values 'Filesystem', 'Block'
+      # Defaults to 'Filesystem'
+      # Optional.
+      volumeMode: Filesystem
+      # awsFileSystemID is AWS efs filesystem ID that needs to be mounted.
+      # Required.
+      awsFileSystemID:
+      # path is existing path on the AWS efs filesystem that needs to be mounted.
+      # Required.
+      path:
+      # readOnly indicate whether the volume is read only or read/write.
+      # Optional
+      readOnly: false
+      fileMount:
+        # path specifies file mount path in po's container.
+        # Required.
+        path: /mnt/spc
+        # subPath within the volume from which the container's volume should be mounted.
+        # Defaults to ''(volume's root)
+        # Optional.
+        subPath: /
+        # readOnly will force the ReadOnly setting in VolumeMounts.
+        # Defaults to 'false'
+        # Optional.
+        readOnly: false
+  
+    # ro(Rollout) is k8s workload resource which is equivalent to a k8s deploy object.
+    # It is intended to replace a deploy object in scenarios
+    # when more advanced deployment or progressive delivery functionality is needed.
+    # ref: https://argo-rollouts.readthedocs.io/en/stable/features/specification/
+    ro:
+      enabled: false
+      # labels is labels map.
+      # Optional.
+      labels: {}
+      # labelsTemplate is labels map.
+      # This field is rendered through the Helm tpl function.
+      # Optional.
+      labelsTemplate: ""
+      # annotations is labels map.
+      # Optional.
+      annotations: {}
+      # annotationsTemplate is labels map.
+      # This field is rendered through the Helm tpl function.
+      # Optional.
+      annotationsTemplate: ""
+      # replicas is number of desired po.
+      # This field will be ignored when hpa is enabled.
+      # po replica is controlled by hpa.
+      # Defaults to '1'.
+      # Optional.
+      replicas:
+      # minReadySeconds is minimum number of seconds for which a newly created po should be ready
+      # without any of its container crashing, for it to be considered available.
+      # Defaults to '0' (po will be considered available as soon as it is ready).
+      # Optional.
+      minReadySeconds:
+      # revisionHistoryLimit is number of old rs to retain.
+      # On clusters with thousands of ro memory usage can be reduced significantly
+      # by changing RevisionHistoryLimit from the default of 10 to a lower number.
+      # Defaults to '10'.
+      # Optional.
+      revisionHistoryLimit: 3
+      # pause allows a user to manually pause a ro at any time.
+      # A ro will not advance through its steps while it is manually paused, but hpa auto-scaling will still occur.
+      # Typically not explicitly set the manifest, but controlled via tools (e.g. kubectl argo rollouts pause).
+      # If true at initial creation of ro, replicas are not scaled up automatically from zero unless manually promoted.
+      # Optional.
+      paused:
+      # progressDeadlineSeconds is maximum time in seconds in which a ro must make progress during
+      # an update, before it is considered to be failed.
+      # Argo ro will continue to process failed rollouts and a condition with a
+      # ProgressDeadlineExceeded reason will be surfaced in the ro status.
+      # Note that progress will not be estimated during the time a ro is paused.
+      # Defaults to '600'
+      # Optional.
+      progressDeadlineSeconds: 600
+      # progressDeadlineAbort determine whether to abort the update when ProgressDeadlineSeconds is exceeded.
+      # Default to 'false'.
+      # Optional.
+      progressDeadlineAbort: false
+      # restartAt is UTC timestamp in which a ro should sequentially restart all of its po.
+      # Used by the `kubectl argo rollouts restart ROLLOUT` command.
+      # The controller will ensure all po have a creationTimestamp greater than or equal to this value.
+      # Optional.
+      restartAt:
+      strategy:
+        # type is ro update strategy.
+        # Valid values 'blueGreen', 'bestEffortCanary', 'rollingUpdate'.
+        # Required.
+        type: rollingUpdate
+        blueGreen:
+          # previewReplicaCount number of replicas to run under the preview svc before the switchover.
+          # Once the rollout is resumed the new rs will be fully scaled up before the switch occurs.
+          # Defaults to '${.spec.replicas}'.
+          # Optional.
+          previewReplicaCount:
+          # autoPromotionEnabled indicates if the ro should automatically promote the new rs
+          # to the active svc or enter a paused state.
+          # Defaults to 'true'.
+          # Optional.
+          autoPromotionEnabled: true
+          # autoPromotionSeconds automatically promotes the current rs to active after the
+          # specified pause delay in seconds after the rs becomes ready.
+          # If omitted, the ro enters and remains in a paused state until manually resumed by resetting spec.Paused to false.
+          # If the AutoPromotionEnabled field is set to false, this field will be ignored.
+          # Optional.
+          autoPromotionSeconds: 10
+          # scaleDownDelaySeconds adds a delay after the active svc is switched to the new rs
+          # and before scaling down the previous rs.
+          # If omitted, the ro waits 30 seconds before scaling down the previous rs.
+          # A minimum of 30 seconds is recommended to ensure IP table propagation across the no in a cluster.
+          # Optional.
+          scaleDownDelaySeconds: 30
+          # scaleDownDelayRevisionLimit is number of old rs that can run at once before getting scaled down.
+          # If omitted, all rs will be retained for the specified scaleDownDelay.
+          # Optional.
+          scaleDownDelayRevisionLimit:
+          # abortScaleDownDelaySeconds add a delay in second before scaling down the preview rs if update is aborted.
+          # 0 means not to scale down.
+          # Default to '30'.
+          # Optional.
+          abortScaleDownDelaySeconds: 30
+        bestEffortCanary:
+          # metadata will be attached to the canary or stable po.
+          # canary metadata will only exist during an update, since there are no canary po in a fully promoted ro.
+          # stable metadata will be attached to the stable po.
+          # Optional.
+          metadata:
+            canary:
+              annotations: {}
+              labels: {}
+            stable:
+              annotations: {}
+              labels: {}
+          # maxUnavailable is a maximum number of po that can be unavailable during the update.
+          # Value can be an absolute number (ex: 5) or a percentage of total po at the start of update (ex: 10%).
+          # Absolute number is calculated from percentage by rounding down.
+          # This can not be 0 if MaxSurge is 0.
+          # Defaults to '25%'.
+          # Optional.
+          maxUnavailable:
+          # maxSurge is maximum number of po that can be scheduled above the original number of po.
+          # Value can be an absolute number (ex: 5) or a percentage of total po at the start of the update (ex: 10%).
+          # Absolute number is calculated from percentage by rounding up.
+          # This can not be 0 if MaxUnavailable is 0.
+          # Defaults to '25%'.
+          # Optional.
+          maxSurge:
+          # scaleDownDelayRevisionLimit limits the number of old rs that can run at one time before getting scaled down.
+          # Optional.
+          scaleDownDelayRevisionLimit:
+          # steps define sequence of steps to take during an update of the canary.
+          # Skipped upon initial deploy of a ro.
+          # the canary strategy has the maxSurge and maxUnavailable fields
+          # to configure how the ro should progress to the new version.
+          # Required.
+          steps: []
+        rollingUpdate:
+          # maxUnavailable is a maximum number of po that can be unavailable during the update.
+          # Value can be an absolute number (ex: 5) or a percentage of total po at the start of update (ex: 10%).
+          # Absolute number is calculated from percentage by rounding down.
+          # This can not be 0 if MaxSurge is 0.
+          # Defaults to '25%'.
+          # Optional.
+          maxUnavailable:
+          # maxSurge is maximum number of po that can be scheduled above the original number of po.
+          # Value can be an absolute number (ex: 5) or a percentage of total po at the start of the update (ex: 10%).
+          # Absolute number is calculated from percentage by rounding up.
+          # This can not be 0 if MaxUnavailable is 0.
+          # Defaults to '25%'.
+          # Optional.
+          maxSurge:
+        # canary:
+        #   # metadata will be attached to the canary or stable po.
+        #   # canary metadata will only exist during an update, since there are no canary po in a fully promoted ro.
+        #   # stable metadata will be attached to the stable po.
+        #   metadata:
+        #     canary:
+        #       annotations: {}
+        #       labels: {}
+        #     stable:
+        #       annotations: {}
+        #       labels: {}
+        #   # maxUnavailable is a maximum number of po that can be unavailable during the update.
+        #   # Value can be an absolute number (ex: 5) or a percentage of total po at the start of update (ex: 10%).
+        #   # Absolute number is calculated from percentage by rounding down.
+        #   # This can not be 0 if MaxSurge is 0.
+        #   # Defaults to '25%'.
+        #   maxUnavailable: 25%
+        #   # maxSurge is maximum number of po that can be scheduled above the original number of po.
+        #   # Value can be an absolute number (ex: 5) or a percentage of total po at the start of the update (ex: 10%).
+        #   # Absolute number is calculated from percentage by rounding up.
+        #   # This can not be 0 if MaxUnavailable is 0.
+        #   # Defaults to '25%'.
+        #   maxSurge: 25%
+        #   # dynamicStableScale can dynamically reduce the scale of the stable rs during an update
+        #   # such that it scales down as the traffic weight increases to canary.
+        #   # This would be desirable in scenarios where the ro has a high replica count and resource cost is a concern,
+        #   # or in bare-metal situations where it is not possible to create additional no capacity to accommodate double the replicas.
+        #   # If dynamicStableScale is true, and the ro is aborted, the canary rs will dynamically scale down as traffic shifts back to stable.
+        #   # If you wish to leave the canary rs scaled up while aborting, an explicit value for abortScaleDownDelaySeconds can be set.
+        #   dynamicStableScale: false
+        #   # scaleDownDelaySeconds adds a delay before scaling down the previous rs when the canary strategy is used with traffic routing.
+        #   # A delay in scaling down the previous rs is needed after switching the stable service selector to point to the new rs,
+        #   # in order to give time for traffic providers to re-target the new po.
+        #   # Supported only with trafficRouting.
+        #   # Defaults to '30'.
+        #   scaleDownDelaySeconds: 30
+        #   # minPodsPerReplicaSet is minimum number of po that will be requested for each rs when using traffic routed canary.
+        #   # This is to ensure high availability of each rs.
+        #   # Defaults to '1'.
+        #   minPodsPerReplicaSet:
+        #   # scaleDownDelayRevisionLimit limits the number of old rs that can run at one time before getting scaled down.
+        #   scaleDownDelayRevisionLimit:
+        #   # abortScaleDownDelaySeconds add a delay in second before scaling down the canary po when update
+        #   # is aborted for canary strategy with traffic routing (not applicable for basic canary).
+        #   # 0 means canary po are not scaled down.
+        #   # Supported only with trafficRouting
+        #   # Default to '30'.
+        #   abortScaleDownDelaySeconds: 30
+        #   # steps define sequence of steps to take during an update of the canary.
+        #   # Skipped upon initial deploy of a ro.
+        #   # If the steps field is omitted, the canary strategy will mimic the rolling update behavior.
+        #   # Similar to the deployment, the canary strategy has the maxSurge and maxUnavailable fields
+        #   # to configure how the Rollout should progress to the new version.
+        #   steps: []
+        #   # trafficRouting specifies the ingress controller or service mesh configuration to achieve advanced traffic splitting.
+        #   # If disabled, will achieve traffic split via a weighted replica counts between the canary and stable rs.
+        #   trafficRouting:
+        #     enabled: true
+        #     alb:
+        #       enabled: true
+        #       # ing reference to k8s ing resource that be injected with a custom action annotation,
+        #       # directing the AWS load balancer controller to split traffic between the canary and stable
+        #       # svc, according to the desired traffic weight
+        #       ing:
+        #       # rootSvc reference to k8s svc that
+        #       # Defaults to '${.spec.strategy.canary.stableService}'
+        #       rootSvc:
+        #         enabled: true
+        #       # svcPort is the port which the canary, stable, root svc listens on.
+        #       svcPort:
+        #       # annotationPrefix allow argo rollout controller to use cusom annotation prefix for AWS load balancer controller.
+        #       # If your AWS load balancer controller is customized to use a different annotation prefix, annotationPrefix field should be specified.
+        #       annotationPrefix:
+        #       # stickySession (also known as session affinity) enable the load balancer to bind a user's session to a specific target.
+        #       stickySession:
+        #         enabled: false
+        #         duration:
+      datadog:
+        enabled: false
+        # libInjection specify which language specific library will be injected in po on start up.
+        libInjection:
+          enabled: false
+          # language correspond to your application language.
+          # Valid values 'java', 'js', 'python', 'dotnet', 'ruby'.
+          # Required.
+          language:
+          # version specify library version.
+          # ref: https://docs.datadoghq.com/tracing/trace_collection/library_injection_local/?tab=kubernetes#step-2---annotate-your-pods-for-library-injection
+          # Required.
+          version:
+      template:
+        # poSpec is a description of a po
+        # ref: https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#PodSpec
+        poSpec:
+          # enableServiceLinks indicates whether information about svc should be injected into po's environment variables.
+          # Defaults to 'true'
+          # Optional.
+          enableServiceLinks: true
+          # restartPolicy is for all container restart policy within the po.
+          # In some contexts, only a subset of those values may be permitted.
+          # Valid values 'Always', 'OnFailure', 'Never'
+          # Defaults to 'Always'
+          # Optional.
+          restartPolicy: Always
+          # terminationGracePeriodSeconds is duration in seconds the po needs to terminate gracefully.
+          # May be decreased in delete request. The value zero indicates stop immediately via the kill signal (no opportunity to shut down).
+          # The grace period is the duration in seconds after the processes running in the po are sent a termination signal
+          # and the time when the processes are forcibly halted with a kill signal.
+          # Set this value longer than the expected cleanup time for your process.
+          # Defaults to '30'
+          # Optional.
+          terminationGracePeriodSeconds: 60
+          # securityContext holds po-level security attributes and common container settings.
+          # Some fields are also present in container.securityContext.
+          # Field values of container.securityContext take precedence over field values of PodSecurityContext.
+          securityContext:
+            # runAsUser is UID to run the entrypoint of the container process.
+            # If set in both SecurityContext and PodSecurityContext,
+            # the value specified in SecurityContext takes precedence for that container.
+            # Defaults to user specified in image metadata if unspecified.
+            # Required.
+            runAsUser: 1000
+            # runAsGroup is GID to run the entrypoint of the container process.
+            # If set in both SecurityContext and PodSecurityContext,
+            # the value specified in SecurityContext takes precedence for that container
+            # Required.
+            runAsGroup: 1000
+            # fsGroup is a special supplemental group that applies to all containers in a po.
+            # Some volume types allow the Kubelet to change the ownership of that volume to be owned by the po.
+            # If unset, the Kubelet will not modify the ownership and permissions of any volume.
+            # Optional.
+            fsGroup: 1000
+            # fsGroupChangePolicy defines behavior of changing ownership and permission of the volume before being exposed inside po.
+            # This field will only apply to volume types which support fsGroup based ownership(and permissions).
+            # It will have no effect on ephemeral volume types such as: secret, configmaps and emptydir.
+            # Valid values 'OnRootMismatch', 'Always'.
+            # Defaults to 'Always'.
+            # Optional.
+            fsGroupChangePolicy: Always
+            # supplementalGroups is list of groups applied to the first process run in each container,
+            # in addition to the container's primary GID, the fsGroup (if specified), and group memberships
+            # defined in the container image for the uid of the container process.
+            # If unspecified, no additional groups are added to any container.
+            # Note that group memberships defined in the container image for the uid of the container process are still effective,
+            # even if they are not included in this list.
+            # Optional.
+            supplementalGroups:
+          container:
+            image:
+              # name is container image name.
+              # Required.
+              name: argoproj/rollouts-demo
+              # tag is container image tag.
+              # Required.
+              tag: blue
+              # pullPolicy is image pull policy.
+              # Valid values 'Always', 'Never', 'IfNotPresent'.
+              # Defaults to 'Always'(if latest tag used), 'IfNotPresent'(otherwise)
+              # Optional
+              pullPolicy: Always
+            # ports is list of ports to expose from the container.
+            ports:
+                # name is port specific name.
+                # name for the container port can be referred to by svc.
+                # Required.
+              - name: http
+                # protocol for port.
+                # Valid values 'UDP', 'TCP', 'SCTP'.
+                # Defaults to 'TCP'.
+                # Required.
+                protocol: TCP
+                # containerPort is number of port to expose on the po's IP address.
+                # Valid values 0 < x < 65536.
+                # Required.
+                containerPort: 8080
+            # volumeMounts describes a mounting of a Volume within a container.
+            volumeMounts:
+                # name is mount target of volumes.
+                # Required.
+              - name: volume-1
+                # mountPath is path within the container at which the volume should be mounted.
+                # Must not contain ':'
+                # Required.
+                mountPath: /home
+                # mountPropagation determines how mounts are propagated from the host to container and the other way around.
+                # When not set, `MountPropagationNone` is used. This field is beta in 1.10.
+                # When RecursiveReadOnly is set to `IfPossible` or to `Enabled`, MountPropagation must be `None` or `unspecified` (which defaults to None).
+                # Optional.
+                mountPropagation:
+                # readOnly determines whether the volume will be mounted readonly.
+                # Defaults to false.
+                # Optional.
+                readOnly:
+                # recursiveReadOnly specifies whether read-only mounts should be handled recursively.
+                # If readOnly is false, this field has no meaning and must be unspecified.
+                # Optional.
+                recursiveReadOnly:
+                # subPath is path within the volume from which the container's volume should be mounted.
+                # Defaults to "" (volume's root).
+                # Optional.
+                subPath:
+                # subPathExpr is expanded path within the volume from which the container's volume should be mounted.
+                # Behaves similarly to subPath but environment variable references $(VAR_NAME) are expanded using the container's environment.
+                # subPathExpr and subPath are mutually exclusive.
+                # Defaults to "" (volume's root).
+                # Optional.
+                subPathExpr:
+            # resources is compute resources required by container.
+            resources:
+              # requests describes the minimum amount of compute resources required.
+              # If you specify a limits for a resource, but do not specify any requests,
+              # and no admission-time mechanism has applied a default requests for that resource,
+              # then k8s copies the limits you specified and uses it as the requested value for the resource.
+              requests:
+                enabled: true
+                # memory is minimum memory size for application running.
+                # Optional.
+                memory: 1Gi
+                # cpu is minimum memory size for application running.
+                # Optional.
+                cpu: 500m
+              # limits describes the maximum amount of compute resources allowed.
+              limits:
+                enabled: true
+                # memory is maximum memory size for application running.
+                # Optional.
+                memory: 1Gi
+                # cpu is maximum memory size for application running.
+                # Optional.
+                cpu: 500m
+            hook:
+              # preStop is called immediately before a container is terminated due to an API request
+              # or management event such as liveness/startup probe failure, preemption, resource contention, etc.
+              # The handler is not called if the container crashes or exits.
+              # The po's termination grace period countdown begins before the PreStop hook is executed.
+              # Regardless of the outcome of the handler, the container will eventually terminate
+              # within the po's termination grace period (unless delayed by finalizers).
+              # Other management of the container blocks until the hook completes or
+              # until the termination grace period is reached.
+              preStop:
+                # exec describes a "run in container" action.
+                exec:
+                  # command is the command line to execute inside the container,
+                  # the working directory for the command is root ('/') in the container's filesystem.
+                  # The command is simply exec'd, it is not run inside a shell,
+                  # so traditional shell instructions ('|', etc) won't work. To use a shell,
+                  # you need to explicitly call out to that shell.
+                  # Exit status of 0 is treated as live/healthy and non-zero is unhealthy.
+                  # sleep command usually used for AWS load balancer controller target reconciliation and log collection.
+                  # Required.
+                  command: ["/bin/ash", "-c", "sleep 20"]
+            probe:
+              # liveness is periodic probe of container liveness.
+              # Container will be restarted if the probe fails.
+              liveness:
+                enabled: false
+                # type specifies type of the probe kind.
+                # Valid values 'httpGet', 'tcpSocket'.
+                type: httpGet
+                # httpGet specifies the http request to perform.
+                httpGet:
+                  # port is number or name of the port to access on the container.
+                  # Required.
+                  port: 8080
+                  # httpHeaders is headers to set in the request.
+                  # HTTP allows repeated headers.
+                  # Optional.
+                  httpHeaders:
+                    # - name:
+                    #   value:
+                  # path to access on the HTTP server.
+                  # Required.
+                  path: /
+                  # scheme to use for connecting to the host.
+                  # Defaults to 'HTTP'.
+                  # Optional.
+                  scheme: HTTP
+                # tcpSocket specifies an action involving a TCP port.
+                tcpSocket:
+                  # port is number or name of the port to access on the container.
+                  # Required.
+                  port:
+                # initialDelaySeconds is bumber of seconds after the container has started before liveness probes are initiated.
+                # Optional.
+                initialDelaySeconds: 5
+                # periodSeconds is how often (in seconds) to perform the probe.
+                # Minimum value is '1'.
+                # Default to '10'.
+                # Optional.
+                periodSeconds: 10
+                # timeoutSeconds Nis number of seconds after which the probe times out.
+                # Minimum value is '1'.
+                # Defaults to '1'.
+                # Optional.
+                timeoutSeconds: 2
+                # failureThreshold is minimum consecutive failures for the probe to be considered failed after having succeeded.
+                # Minimum value is '1'.
+                # Defaults to '3'.
+                # Optional.
+                failureThreshold: 2
+              # readiness is periodic probe of container service readiness.
+              # Container will be removed from svc's ep if the probe fails.
+              readiness:
+                enabled: false
+                # type specifies type of the probe kind.
+                # Valid values 'httpGet', 'tcpSocket'.
+                type: httpGet
+                # httpGet specifies the http request to perform.
+                httpGet:
+                  # port is number or name of the port to access on the container.
+                  # Required.
+                  port: 8080
+                  # httpHeaders is headers to set in the request.
+                  # HTTP allows repeated headers.
+                  # Optioanl.
+                  httpHeaders:
+                    # - name:
+                    #   value:
+                  # path to access on the HTTP server.
+                  # Required.
+                  path: /
+                  # scheme to use for connecting to the host.
+                  # Defaults to 'HTTP'.
+                  # Optioanl.
+                  scheme: HTTP
+                # tcpSocket specifies an action involving a TCP port.
+                tcpSocket:
+                  # port is number or name of the port to access on the container.
+                  # Required.
+                  port:
+                # periodSeconds is how often (in seconds) to perform the probe.
+                # Minimum value is '1'.
+                # Default to '10'.
+                # Optioanl.
+                periodSeconds: 10
+                # timeoutSeconds Nis number of seconds after which the probe times out.
+                # Minimum value is '1'.
+                # Defaults to '1'.
+                # Optioanl.
+                timeoutSeconds: 2
+                # failureThreshold is minimum consecutive failures for the probe to be considered failed after having succeeded.
+                # Minimum value is '1'.
+                # Defaults to '3'.
+                # Optioanl.
+                failureThreshold: 2
+                # successThreshold is minimum consecutive successes for the probe to be considered successful after having failed.
+                # Defaults to 1.
+                # Optioanl.
+                successThreshold: 1
+              # startup indicates that the po has successfully initialized.
+              # If specified, no other probes are executed until this completes successfully.
+              # If this probe fails, the po will be restarted, just as if the livenessProbe failed.
+              # This can be used to provide different probe parameters at the beginning of a po's lifecycle,
+              # when it might take a long time to load data or warm a cache, than during steady-state operation.
+              startup:
+                enabled: false
+                # type specifies type of the probe kind.
+                # Valid values 'httpGet', 'tcpSocket'.
+                type: httpGet
+                # httpGet specifies the http request to perform.
+                httpGet:
+                  # port is number or name of the port to access on the container.
+                  # Required.
+                  port: 8080
+                  # httpHeaders is headers to set in the request.
+                  # HTTP allows repeated headers.
+                  # Optioanl.
+                  httpHeaders:
+                    # - name:
+                    #   value:
+                  # path to access on the HTTP server.
+                  # Required.
+                  path: /
+                  # scheme to use for connecting to the host.
+                  # Defaults to 'HTTP'.
+                  # Optioanl.
+                  scheme: HTTP
+                # tcpSocket specifies an action involving a TCP port.
+                tcpSocket:
+                  # port is number or name of the port to access on the container.
+                  # Required.
+                  port:
+                # periodSeconds is how often (in seconds) to perform the probe.
+                # Minimum value is '1'.
+                # Default to '10'.
+                # Optioanl.
+                periodSeconds: 10
+                # timeoutSeconds Nis number of seconds after which the probe times out.
+                # Minimum value is '1'.
+                # Defaults to '1'.
+                # Optioanl.
+                timeoutSeconds: 2
+                # failureThreshold is minimum consecutive failures for the probe to be considered failed after having succeeded.
+                # Minimum value is '1'.
+                # Defaults to '3'.
+                # Optioanl.
+                failureThreshold: 6
+          # initContainers are executed in order prior to containers being started. If any init container fails, the pod is considered to have failed and is handled according to its restartPolicy.
+          # The name for an init container or normal container must be unique among all containers.
+          # Init containers may not have Lifecycle actions, Readiness probes, Liveness probes, or Startup probes.
+          # The resourceRequirements of an init container are taken into account during scheduling by finding the highest request/limit for each resource type, and then using the max of of that value or the sum of the normal containers.
+          # Limits are applied to init containers in a similar fashion. Init containers cannot currently be added or removed.
+          initContainers:
+              # name can distinguish a container from an init container and an app container in a pod.
+              # Required.
+            - name: init-container-1
+              # image is container image name.
+              # Required.
+              image: alpine
+              # imagePullPolicy is image pull policy.
+              # Valid values 'Always', 'Never', 'IfNotPresent'.
+              # Defaults to 'Always'(if latest tag used), 'IfNotPresent'(otherwise)
+              # Optional.
+              imagePullPolicy: Always
+              # command is entrypoint array of string. Not executed within a shell.
+              # The image's ENTRYPOINT is used if this is not provided.
+              # Optional.
+              command: []
+              # args is arguments of string to the entrypoint.
+              # The image's CMD is used if this is not provided.
+              # Optional.
+              args: []
+              # workingDir means container's working directory.
+              # If not specified, the container runtime's default will be used, which might be configured in the container image.
+              # Optional.
+              workingDir:
+              # volumeMounts describes a mounting of a Volume within a container.
+              volumeMounts:
+                  # name is mount target of volumes.
+                  # Required.
+                - name: volume-1
+                  # mountPath is path within the container at which the volume should be mounted.
+                  # Must not contain ':'
+                  # Required.
+                  mountPath: /home
+                  # mountPropagation determines how mounts are propagated from the host to container and the other way around.
+                  # When not set, `MountPropagationNone` is used. This field is beta in 1.10.
+                  # When RecursiveReadOnly is set to `IfPossible` or to `Enabled`, MountPropagation must be `None` or `unspecified` (which defaults to None).
+                  # Optional.
+                  mountPropagation:
+                  # readOnly determines whether the volume will be mounted readonly.
+                  # Defaults to false.
+                  # Optional.
+                  readOnly:
+                  # recursiveReadOnly specifies whether read-only mounts should be handled recursively.
+                  # If readOnly is false, this field has no meaning and must be unspecified.
+                  # Optional.
+                  recursiveReadOnly:
+                  # subPath is path within the volume from which the container's volume should be mounted.
+                  # Defaults to "" (volume's root).
+                  # Optional.
+                  subPath:
+                  # subPathExpr is expanded path within the volume from which the container's volume should be mounted.
+                  # Behaves similarly to subPath but environment variable references $(VAR_NAME) are expanded using the container's environment.
+                  # subPathExpr and subPath are mutually exclusive.
+                  # Defaults to "" (volume's root).
+                  # Optional.
+                  subPathExpr:
+              # resources is compute resources required by container.
+              resources:
+                # requests describes the minimum amount of compute resources required.
+                # If you specify a limits for a resource, but do not specify any requests,
+                # and no admission-time mechanism has applied a default requests for that resource,
+                # then k8s copies the limits you specified and uses it as the requested value for the resource.
+                requests:
+                  enabled: true
+                  # memory is minimum memory size for application running.
+                  # Optional.
+                  memory: 1Gi
+                  # cpu is minimum memory size for application running.
+                  # Optional.
+                  cpu: 500m
+                # limits describes the maximum amount of compute resources allowed.
+                limits:
+                  enabled: true
+                  # memory is maximum memory size for application running.
+                  # Optional.
+                  memory: 1Gi
+                  # cpu is maximum memory size for application running.
+                  # Optional.
+                  cpu: 500m
+          # volumes is list that can be mounted by containers belonging to the pod.
+          volumes:
+              # name is unique within the pod.
+              # Required.
+            - name: volume-1
+              # type specifies which types of volume will be created.
+              # Valid values `emptyDir`.
+              # Required.
+              type: emptyDir
+              # emptyDir represents a temporary directory that shares a pod's lifetime.
+              emptyDir:
+                # medium represents what type of storage medium should back this directory.
+                # Must be an empty string (default) or Memory.
+                # The default is "" which means to use the node's default medium.
+                # Optioanl.
+                medium:
+                # sizeLimit is the total amount of local storage required for this EmptyDir volume.
+                # The size limit is also applicable for memory medium.
+                # The maximum usage on memory medium EmptyDir would be the minimum value between the SizeLimit specified here and the sum of memory limits of all containers in a pod.
+                # The default is nil which means that the limit is undefined.
+                # Optioanl.
+                sizeLimit: 100Mi
+
+    # spc(SecretProviderClass) lists the secrets to mount and the file name to mount them as.
+    # The spc must be in the same namespace as the k8s po it references.
+    # Now only support AWS secret manager.
+    # ref: https://secrets-store-csi-driver.sigs.k8s.io/introduction.html
+    # ref: https://docs.aws.amazon.com/secretsmanager/latest/userguide/integrating_csi_driver_SecretProviderClass.html
+    spc:
+      enabled: false
+      # labels is labels map.
+      # Optional.
+      labels: {}
+      # labelsTemplate is labels map.
+      # This field is rendered through the Helm tpl function.
+      # Optional.
+      labelsTemplate: ""
+      # annotations is labels map.
+      # Optional.
+      annotations: {}
+      # annotationsTemplate is labels map.
+      # This field is rendered through the Helm tpl function.
+      # Optional.
+      annotationsTemplate: ""
+      # region is aws region of the secret.
+      # If you don't use this field, the ASCP looks up the Region from the annotation on the node.
+      # If the secret is not retrieved successfully from region, but it is retrieved successfully from failoverRegion, then the ASCP mounts that secret value.
+      # Optioanl.
+      region: ap-northeast-2
+      # failoverRegion is aws region of the secret.
+      # If the secret is retrieved successfully from region, then the ASCP mounts that secret value.
+      # If the secret is not retrieved successfully from region, but it is retrieved successfully from failoverRegion, then the ASCP mounts that secret value.
+      # Optioanl.
+      failoverRegion:
+      # pathTranslation is single substitution character to use if the file name in Amazon EKS will contain the path separator character, such as slash (/) on Linux.
+      # The ASCP can't create a mounted file that contains a path separator character.
+      # Instead, the ASCP replaces the path separator character with a different character.
+      # To prevent any character substitution, enter the string False.
+      # Defaults to '_'
+      # Optioanl.
+      pathTranslation:
+      fileMount:
+        # path specifies file mount path in po's container.
+        # Required.
+        path: /mnt/pv
+      # object is a string containing a YAML declaration of the secrets to be mounted.
+      object:
+        # name or full ARN of the secret. If you use the ARN, you can omit objectType.
+        # This field becomes the file name of the secret in the Amazon EKS po unless you specify objectAlias.
+        # If you use an ARN, the Region in the ARN must match the field region.
+        # Required.
+        name:
+        # type is required if you don't use a Secrets Manager ARN for objectName.
+        # Valid values 'secretsmanager', 'ssmparameter'
+        # Required.
+        type: secretsmanager
+        # alias allows you to configure file name of the secret in the Amazon EKS po.
+        # If you don't specify this field, the objectName appears as the file name.
+        # Optioanl.
+        alias:
+        # jmesPath is a map of the keys in the secret to the files to be mounted in Amazon EKS.
+        # To use this field, your secret value must be in JSON format.
+        # Key means path, Value means alias(become the file name in the Amazon EKS po)
+        # Required.
+        jmesPath: {}
+      # failoverObject has a failover role for object.
+      # Name or full ARN of the failover secret.
+      # If you use an ARN, the Region in the ARN must match the field failoverRegion
+      # Optional.
+      failoverObject:
+      # sec define the desired state of the synced k8s secret.
+      # Volume mount is required for the sync with k8s secret.
+      sec:
+        enabled: false
+        # type is used to facilitate programmatic handling of the Secret data.
+        # Valid built-in values 'Opaque', 'kubernetes.io/service-account-token', ...
+        # Defaults to 'Opaque'
+        # Optional.
+        type: Opaque
+        # mapping allows you to configure k8s secret key for secret object alias
+        # Required.
+        mapping: {}
+        # envMount decide wheather secret object will be mount as environment or not in po.
+        envMount:
+          enabled: true
+  
+    # svc(Service) is a named abstraction of software service (for example, mysql) consisting of local port (for example 3306)
+    # that the proxy listens on, and the selector that determines which po will answer requests sent through the proxy.
+    # Now only support LoadBalancer type with AWS nlb.
+    # ref: https://v1-27.docs.kubernetes.io/docs/reference/kubernetes-api/service-resources/service-v1/
+    svc:
+      enabled: false
+      # labels is labels map.
+      # Optional.
+      labels: {}
+      # labelsTemplate is labels map.
+      # This field is rendered through the Helm tpl function.
+      # Optional.
+      labelsTemplate: ""
+      # annotations is labels map.
+      # Optional.
+      annotations: {}
+      # annotationsTemplate is labels map.
+      # This field is rendered through the Helm tpl function.
+      # Optional.
+      annotationsTemplate: ""
+      # targetPortName is a container's exposure port name(.Values.application.ro.template.poSpec.container.ports[*].name)
+      # Required.
+      targetPortName: http
+      # externalIPs is a list of IP addresses for which nodes in the cluster will also accept traffic for this service.
+      # These IPs are not managed by k8s.
+      # The user is responsible for ensuring that traffic arrives at a node with this IP.
+      # Optional.
+      externalIPs: []
+      # allocateLoadBalancerNodePorts defines if NodePorts will be automatically allocated for svc with type LoadBalancer.
+      # if set false for nlb, .spec.ports[*].nodePort must be allocated manually.
+      # Optional.
+      allocateLoadBalancerNodePorts:
+      sessionAffinity:
+        # type used to maintain session affinity.
+        # Enable client IP based session affinity.
+        # Valid values 'ClientIP', 'None'
+        # Defaults to None
+        # Optional.
+        type:
+        # timeoutSeconds specifies the seconds of ClientIP type session sticky time.
+        # The value must be >0 && <=86400(for 1 day) if ServiceAffinity == "ClientIP". Default value is 10800(for 3 hours).
+        # Optional.
+        timeoutSeconds:
+      # externalTrafficPolicy describes how nodes distribute service traffic they receive on
+      # one of the svc's 'externally-facing' addresses (NodePorts, ExternalIPs, and LoadBalancer IPs).
+      # Valid values 'Cluster', 'Local'
+      # Defaults to 'Cluster'
+      # Optional.
+      externalTrafficPolicy: Cluster
+      # InternalTrafficPolicy describes how nodes distribute service traffic they receive on the ClusterIP.
+      # Valid values 'Cluster', 'Local'
+      # Defaults to 'Cluster'
+      # Optional.
+      internalTrafficPolicy: Cluster
+      # The AWS Load Balancer Controller (LBC) supports reconciliation for k8s svc resources of type LoadBalancer
+      # by provisioning an AWS Network Load Balancer (NLB) All Values must be string type(it means quoted or dobule quoted)
+      # ref: https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.5/guide/service/nlb/
+      nlb:
+        # name specifies the custom name to use for the load balancer.
+        # longer than 32 characters will be treated as an error.
+        # Required.
+        name:
+        # scheme specifies whether the NLB will be internet-facing or internal.
+        # Valid values are 'internal', 'internet-facing'.
+        # Required.
+        scheme:
+        # attributes specifies Load Balancer Attributes that should be applied to the NLB.
+        # Optional.
+        attributes: load_balancing.cross_zone.enabled=true, access_logs.s3.enabled=false
+        # tags specifies additional tags to apply to the AWS resources.
+        # Optional.
+        tags:
+        ip:
+          # type specifies the IP address type of NLB.
+          # Valid values are 'ipv4', 'dualstack'.
+          # Required.
+          type: ipv4
+          # subnets specifies the Availability Zone the NLB will route traffic to.
+          # You must specify at least one subnet in any of the AZs
+          # Both subnetID or subnetName(Name tag on subnets) can be used.
+          # Subnets are auto-discovered if this annotation is not specified,
+          # Optional.
+          subnets:
+          # ipv6List specifies a list of IPv6 addresses for 'dualstack' ip type.
+          # You must specify the same number of private IPv6 addresses as load balancer subnets annotation.
+          # Optional.
+          ipv6List:
+          # ipv4List specifies a list of private IPv4 addresses for 'internal' nlb scheme.
+          # You must specify the same number of private IPv4 addresses as load balancer subnets annotation.
+          # Optional.
+          ipv4List:
+          # eip specifies a list of elastic IP address configuration for 'internet-facing' nlb scheme.
+          # Optional.
+          eIP:
+          # sourceRanges specifies the CIDRs that are allowed to access the NLB.
+          # Optional.
+          sourceRanges: []
+          # frontendSecurityGroups specifies the frontend securityGroups you want to attach to an NLB.
+          # When this annotation is not present, the controller will automatically create one security group.
+          # The security group will be attached to the LoadBalancer and allow access from inbound-cidrs to the listen-ports.
+          # Also, the securityGroups for target instances/ENIs will be modified to allow inbound traffic from this securityGroup.
+          # If you specify this annotation, you need to configure the security groups on your target instances/ENIs
+          # to allow inbound traffic from the load balancer.
+          # You could also set the manage-backend-security-group-rules if you want the controller to manage the security group rules.
+          # Optional.
+          frontendSecurityGroups:
+          # securityGroupsManaged specifies whether the controller should automatically add the ingress rules to the instance/ENI security group.
+          # If you disable the automatic management of security group rules for an NLB,
+          # you will need to manually add appropriate ingress rules to your EC2 instance or ENI security groups to allow access to the traffic and health check ports.
+          # Defaults to 'true'
+          # Optional.
+          securityGroupsManaged: true
+        target:
+          # type specifies the target type to configure for NLB.
+          # 'instance' mode will route traffic to all EC2 instances within cluster on the NodePort opened for your svc.
+          # The kube-proxy on the individual worker nodes sets up the forwarding of the traffic from the NodePort to the po behind the svc.
+          # 'ip' mode will route traffic directly to the po IP.
+          # In this mode, AWS NLB sends traffic directly to the Kubernetes po behind the svc,
+          # eliminating the need for an extra network hop through the worker nodes in the Kubernetes cluster.
+          # You can choose between `instance` and `ip`.
+          # Required.
+          type: ip
+          # nodeLabels specifies which nodes to include in the target group registration for 'instance' target type.
+          # Optional.
+          nodeLabels:
+          # attributes specifies the Target Group Attributes to be configured.
+          # Optional.
+          attributes: deregistration_delay.timeout_seconds=120, deregistration_delay.connection_termination.enabled=false, preserve_client_ip.enabled=false
+        tls:
+          enabled: false
+          # certARN specifies the ARN of one or more certificates managed by the AWS Certificate Manager.
+          # Required.
+          certARN:
+          # ports specifies the frontend ports with TLS listeners.
+          # If you don't specify this annotation, controller creates TLS listener for all the service ports.
+          # Specify this annotation if you need both TLS and non-TLS listeners on the same load balancer.
+          # Optional.
+          ports:
+          # negotiationPolicy specifies the Security Policy for NLB frontend connections, allowing you to control the protocol and ciphers.
+          # Optional.
+          negotiationPolicy:
+          # backendProtocol specifies whether to use TLS for the backend traffic between the load balancer and the kubernetes po.
+          # Valid values are `ssl`, `tcp`.
+          # Defauls to `tcp`.
+          # Optional.
+          backendProtocol:
+          # alpnPolicy allows you to configure the ALPN(Application Layer Protocol Negotiation) policies on the load balancer.
+          # Optional.
+          alpnPolicy:
+        healthCheck:
+          # protocol specifies the target group health check protocol.
+          # Valid values are 'tcp', 'http', 'https'.
+          # 'tcp' is the default health check protocol if the service .spec.externalTrafficPolicy is Cluster.
+          # 'http' is the default health check protocol if the service .spec.externalTrafficPolicy is Local.
+          # if the service .spec.externalTrafficPolicy is Local, do not use 'tcp' for health check.
+          # Optional.
+          protocol:
+          # port specifies the TCP port to use for target group health check.
+          # Valid values are '${port number}', 'traffic-port'.
+          # '${.spec.healthCheckNodePort}'' is the default health check port if .spec.externalTrafficPolicy is Local.
+          # 'traffic-port' is the default health check port for other cases.
+          # Optional.
+          port: traffic-port
+          # path specifies the http path for the health check in case of http/https protocol.
+          # Defaults to '/'.
+          # Optional.
+          path:
+          # successCode specifies the http success codes for the health check in case of http/https protocol.
+          # Defaults to '200-399'.
+          # Optional.
+          successCode:
+          # healthyThreshold specifies the consecutive health check successes required before a target is considered healthy.
+          # Defaults to '3'.
+          # Optional.
+          healthyThreshold:
+          # unhealthyThreshold specifies the consecutive health check failures before a target gets marked unhealthy.
+          # Defaults to '3'.
+          # Optional.
+          unhealthyThreshold:
+          # interval specifies the interval between consecutive health checks.
+          # Defaults to '10'.
+          # Optional.
+          interval:
+          # timeout specifies the target group health check timeout.
+          # The target has to respond within the timeout for a successful health check.
+          # The controller currently ignores the timeout configuration due to the limitations on the AWS NLB.
+          # The default timeout for TCP is 10s and HTTP is 6s.
+          # timeout:

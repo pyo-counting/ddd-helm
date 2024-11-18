@@ -1,0 +1,35 @@
+{{- if .Values.common.ns.enabled }}
+{{- if .Values.common.cm.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.domainCode }}-cm
+  namespace: {{ include "ddd-helm.namespace" . }}
+  labels:
+    {{- include "ddd-helm.commonLabels" . | nindent 4 }}
+    {{- if .Values.common.cm.labelsTemplate }}
+    {{- tpl .Values.common.cm.labelsTemplate . | nindent 4 }}
+    {{- end }}
+    {{- if .Values.common.cm.labels }}
+    {{- toYaml .Values.common.cm.labels . | nindent 4 }}
+    {{- end }}
+  {{- if or .Values.common.cm.annotationsTemplate .Values.common.cm.annotations }}
+  annotations:
+    {{- if .Values.common.cm.annotationsTemplate }}
+    {{- tpl .Values.common.cm.annotationsTemplate . | nindent 4 }}
+    {{- end }}
+    {{- if .Values.common.cm.annotations }}
+    {{- toYaml .Values.common.cm.annotations . | nindent 4 }}
+    {{- end }}
+  {{- end }}
+{{- if .Values.common.cm.dataTemplate }}
+data:
+  {{- tpl .Values.common.cm.dataTemplate . | nindent 2 }}
+{{- end }}
+{{- if .Values.common.cm.binaryDataTemplate }}
+binaryData:
+  {{- tpl .Values.common.cm.binaryDataTemplate . | nindent 2 }}
+{{- end }}
+immutable: false
+{{- end -}}
+{{- end -}}

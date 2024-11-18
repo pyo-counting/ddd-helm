@@ -1,0 +1,175 @@
+{{- if .Values.common.ns.enabled }}
+{{- range $app := .Values.application -}}
+{{- if and $app.hpa.enabled $app.ro.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $.Values.domainCode }}-{{ $app.name }}-hpa
+  namespace: {{ include "ddd-helm.namespace" $ }}
+  labels:
+    {{- include "ddd-helm.commonLabels" $ | nindent 4 }}
+    {{- include "ddd-helm.componentLabel" $app | nindent 4 }}
+    {{- if $app.hpa.labelsTemplate }}
+    {{- tpl $app.hpa.labelsTemplate $ | nindent 4 }}
+    {{- end }}
+    {{- if $app.hpa.labels }}
+    {{- toYaml $app.hpa.labels | nindent 4 }}
+    {{- end }}
+  {{- if or $app.hpa.annotationsTemplate $app.hpa.annotations }}
+  annotations:
+    {{- if $app.hpa.annotationsTemplate }}
+    {{- tpl $app.hpa.annotationsTemplate $ | nindent 4 }}
+    {{- end }}
+    {{- if $app.hpa.annotations }}
+    {{- toYaml $app.hpa.annotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
+spec:
+  {{- if $app.hpa.minReplica }}
+  minReplicas: {{ $app.hpa.minReplica }}
+  {{- end }}
+  maxReplicas: {{ $app.hpa.maxReplica }}
+  scaleTargetRef:
+    apiVersion: argoproj.io/v1alpha1
+    kind: Rollout
+    name: {{ $.Values.domainCode }}-{{ $app.name }}-ro
+  behavior:
+    scaleDown:
+      {{- if $app.hpa.behavior.scaleDown.selectPolicy }}
+      selectPolicy: {{ $app.hpa.behavior.scaleDown.selectPolicy }}
+      {{- end }}
+      {{- if $app.hpa.behavior.scaleDown.stabilizationWindowSeconds }}
+      stabilizationWindowSeconds: {{ $app.hpa.behavior.scaleDown.stabilizationWindowSeconds }}
+      {{- end }}
+      {{- if $app.hpa.behavior.scaleDown.policies }}
+      policies:
+        {{- toYaml $app.hpa.behavior.scaleDown.policies | nindent 8 }}
+      {{- end }}
+    scaleUp:
+      {{- if $app.hpa.behavior.scaleUp.selectPolicy }}
+      selectPolicy: {{ $app.hpa.behavior.scaleUp.selectPolicy }}
+      {{- end }}
+      {{- if $app.hpa.behavior.scaleUp.stabilizationWindowSeconds }}
+      stabilizationWindowSeconds: {{ $app.hpa.behavior.scaleUp.stabilizationWindowSeconds }}
+      {{- end }}
+      {{- if $app.hpa.behavior.scaleUp.policies }}
+      policies:
+        {{- toYaml $app.hpa.behavior.scaleUp.policies | nindent 8 }}
+      {{- end }}
+  metrics:
+    {{- range $app.hpa.metrics }}
+    {{- if eq .type "ContainerResource" }}
+    - type: ContainerResource
+      containerResource:
+        container: "{{ $.Values.domainCode }}-{{ $app.name }}"
+        name: {{ .metric }}
+        target:
+          type: {{ .target.type }}
+          {{- if eq .target.type "Utilization" }}
+          averageUtilization: {{ .target.averageUtilization }}
+          {{- else if eq .target.type "AverageValue" }}
+          averageValue: {{ .target.averageValue }}
+          {{- else if eq .target.type "Value" }}
+          value: {{ .target.value }}
+          {{- end }}
+    {{- else if eq .type "External" }}
+    - type: External
+      external:
+        metric:
+          {{- if and .metric.crd.enabled }}
+          {{- if eq .metric.crd.type "DatadogMetric" }}
+          name: "datadogmetric@{{ include "ddd-helm.namespace" $ }}:{{ $.Values.domainCode }}-{{ $app.name }}-dm-{{ .metric.crd.order }}"
+          # {{- else if eq .metric.crd.type "" }}
+          # name:
+          {{- end }}
+          {{- else }}
+          name: {{ .metric.query }}
+          {{- if .metric.selector.enabled }}
+          selector:
+            {{- if eq .metric.selector.type "matchExpressions" }}
+            matchExpressions:
+              {{- toYaml .metric.selector.matchExpressions | nindent 14 }}
+            {{- else if eq .metric.selector.type "matchLabels" }}
+            matchLabels:
+              {{- toYaml .metric.selector.matchLabels | nindent 14 }}
+            {{- end }}
+          {{- end }}
+          {{- end }}
+        target:
+          type: {{ .target.type }}
+          {{- if eq .target.type "Utilization" }}
+          averageUtilization: {{ .target.averageUtilization }}
+          {{- else if eq .target.type "AverageValue" }}
+          averageValue: {{ .target.averageValue }}
+          {{- else if eq .target.type "Value" }}
+          value: {{ .target.value }}
+          {{- end }}
+    {{- else if eq .type "Object" }}
+    - type: Object
+      object:
+        describedObject:
+          {{- toYaml .object | indent 10 }}
+        metric:
+          name: {{ .metric.name }}
+          {{- if .metric.selector.enabled }}
+          selector:
+            {{- if eq .metric.selector.type "matchExpressions" }}
+            matchExpressions:
+              {{- toYaml .metric.selector.matchExpressions | nindent 14 }}
+            {{- else if eq .metric.selector.type "matchLabels" }}
+            matchLabels:
+              {{- toYaml .metric.selector.matchLabels | nindent 14 }}
+            {{- end }}
+          {{- end }}
+        target:
+          type: {{ .target.type }}
+          {{- if eq .target.type "Utilization" }}
+          averageUtilization: {{ .target.averageUtilization }}
+          {{- else if eq .target.type "AverageValue" }}
+          averageValue: {{ .target.averageValue }}
+          {{- else if eq .target.type "Value" }}
+          value: {{ .target.value }}
+          {{- end }}
+    {{- else if eq .type "Pods" }}
+    - type: Pods
+      pods:
+        metric:
+          name: {{ .metric.name }}
+          {{- if .metric.selector.enabled }}
+          selector:
+            {{- if eq .metric.selector.type "matchExpressions" }}
+            matchExpressions:
+              {{- toYaml .metric.selector.matchExpressions | nindent 14 }}
+            {{- else if eq .metric.selector.type "matchLabels" }}
+            matchLabels:
+              {{- toYaml .metric.selector.matchLabels | nindent 14 }}
+            {{- end }}
+          {{- end }}
+        target:
+          type: {{ .target.type }}
+          {{- if eq .target.type "Utilization" }}
+          averageUtilization: {{ .target.averageUtilization }}
+          {{- else if eq .target.type "AverageValue" }}
+          averageValue: {{ .target.averageValue }}
+          {{- else if eq .target.type "Value" }}
+          value: {{ .target.value }}
+          {{- end }}
+    {{- else if eq .type "Resource" }}
+    - type: Resource
+      resource:
+        name: {{ .metric }}
+        target:
+          type: {{ .target.type }}
+          {{- if eq .target.type "Utilization" }}
+          averageUtilization: {{ .target.averageUtilization }}
+          {{- else if eq .target.type "AverageValue" }}
+          averageValue: {{ .target.averageValue }}
+          {{- else if eq .target.type "Value" }}
+          value: {{ .target.value }}
+          {{- end }}
+    {{- end }}
+    {{- end }}
+---
+{{- end -}}
+{{- end -}}
+{{- end -}}

@@ -1,0 +1,36 @@
+{{- if .Values.common.ns.enabled }}
+{{- if and .Values.common.rb.enabled .Values.common.sa.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Values.domainCode }}-rb
+  namespace: {{ include "ddd-helm.namespace" . }}
+  labels:
+    {{- include "ddd-helm.commonLabels" . | nindent 4 }}
+    {{- if .Values.common.rb.labelsTemplate }}
+    {{- tpl .Values.common.rb.labelsTemplate . | nindent 4 }}
+    {{- end }}
+    {{- if .Values.common.rb.labels }}
+    {{- toYaml .Values.common.rb.labels . | nindent 4 }}
+    {{- end }}
+  {{- if or .Values.common.rb.annotationsTemplate .Values.common.rb.annotations }}
+  annotations:
+    {{- if .Values.common.rb.annotationsTemplate }}
+    {{- tpl .Values.common.rb.annotationsTemplate . | nindent 4 }}
+    {{- end }}
+    {{- if .Values.common.rb.annotations }}
+    {{- toYaml .Values.common.rb.annotations . | nindent 4 }}
+    {{- end }}
+  {{- end }}
+roleRef:
+  {{- with .Values.common.rb.roleRef }}
+  apiGroup: {{ .apiGroup }}
+  kind: {{ .kind }}
+  name: {{ .name }}
+  {{- end }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.domainCode }}-sa
+    namespace: {{ include "ddd-helm.namespace" . }}
+{{- end -}}
+{{- end -}}

@@ -1,0 +1,638 @@
+{{- if and .Values.common.ns.enabled .Values.common.sa.enabled }}
+{{- range $app := .Values.application -}}
+{{- if $app.cwf.enabled -}}
+{{- range $cwf := $app.cwf.lists -}}
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: {{ $.Values.domainCode }}-{{ $app.name }}-cwf-{{ $cwf.name }}
+  namespace: {{ include "ddd-helm.namespace" $ }}
+  labels:
+    {{- include "ddd-helm.commonLabels" $ | nindent 4 }}
+    {{- include "ddd-helm.componentLabel" $app | nindent 4 }}
+    {{- if $cwf.labelsTemplate }}
+    {{- tpl $cwf.labelsTemplate $ | nindent 4 }}
+    {{- end }}
+    {{- if $cwf.labels }}
+    {{- toYaml $cwf.labels | nindent 4 }}
+    {{- end }}
+  {{- if or $cwf.annotationsTemplate $cwf.annotations }}
+  annotations:
+    {{- if $cwf.annotationsTemplate }}
+    {{- tpl $cwf.annotationsTemplate $ | nindent 4 }}
+    {{- end }}
+    {{- if $cwf.annotations }}
+    {{- toYaml $cwf.annotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
+spec:
+  {{- if $cwf.timezone }}
+  timezone: {{ $cwf.timezone | quote }}
+  {{- end }}
+  schedules:
+    {{- toYaml $cwf.schedules | nindent 4 }}
+  {{- if $cwf.concurrencyPolicy }}
+  concurrencyPolicy: {{ $cwf.concurrencyPolicy | quote }}
+  {{- end }}
+  {{- if $cwf.startingDeadlineSeconds }}
+  startingDeadlineSeconds: {{ $cwf.startingDeadlineSeconds }}
+  {{- end }}
+  {{- if $cwf.successfulJobsHistoryLimit }}
+  successfulJobsHistoryLimit: {{ $cwf.successfulJobsHistoryLimit }}
+  {{- end }}
+  {{- if $cwf.failedJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ $cwf.failedJobsHistoryLimit }}
+  {{- end }}
+  {{- if $cwf.stopStrategy }}
+  stopStrategy:
+    expression: {{ $cwf.stopStrategy.expression | quote }}
+  {{- end }}
+  {{- if $cwf.when }}
+  when: {{ $cwf.when | quote }}
+  {{- end }}
+  {{- if $cwf.suspend }}
+  suspend: {{ $cwf.suspend }}
+  {{- end }}
+  {{- if $cwf.workflow.metadata }}
+  workflowMetadata:
+    {{- if or $cwf.workflow.metadata.labelsTemplate $cwf.workflow.metadata.labels }}
+    labels:
+      {{- if $cwf.workflow.metadata.labelsTemplate }}
+      {{- tpl $cwf.workflow.metadata.labelsTemplate $ | nindent 6 }}
+      {{- end }}
+      {{- if $cwf.workflow.metadata.labels }}
+      {{- toYaml $cwf.workflow.metadata.labels | nindent 6 }}
+      {{- end }}
+    {{- end }}
+    {{- if or $cwf.workflow.metadata.annotationsTemplate $cwf.workflow.metadata.annotations }}
+    annotations:
+      {{- if $cwf.workflow.metadata.annotationsTemplate }}
+      {{- tpl $cwf.workflow.metadata.annotationsTemplate $ | nindent 6 }}
+      {{- end }}
+      {{- if $cwf.workflow.metadata.annotations }}
+      {{- toYaml $cwf.workflow.metadata.annotations | nindent 6 }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+  workflowSpec:
+    # workflow config
+    {{- if $cwf.workflow.spec.activeDeadlineSeconds }}
+    activeDeadlineSeconds: {{ $cwf.workflow.spec.activeDeadlineSeconds }}
+    {{- end }}
+    archiveLogs: false
+    {{- if $cwf.workflow.spec.priority }}
+    priority: {{ $cwf.workflow.spec.priority }}
+    {{- end }}
+    {{- if $cwf.workflow.spec.retryStrategy }}
+    {{- include "ddd-helm.cwf.retryStrategy" $cwf.workflow.spec.retryStrategy | nindent 4 }}
+    {{- end }}
+    {{- if $cwf.workflow.spec.synchronization }}
+    {{- include "ddd-helm.cwf.synchronization" $cwf.workflow.spec.synchronization | nindent 4 }}
+    {{- end }}
+    {{- if $cwf.workflow.spec.ttlStrategy }}
+    ttlStrategy:
+      {{- if $cwf.workflow.spec.ttlStrategy.secondsAfterCompletion }}
+      secondsAfterCompletion: {{ $cwf.workflow.spec.ttlStrategy.secondsAfterCompletion }}
+      {{- end }}
+      {{- if $cwf.workflow.spec.ttlStrategy.secondsAfterFailure }}
+      secondsAfterFailure: {{ $cwf.workflow.spec.ttlStrategy.secondsAfterFailure }}
+      {{- end }}
+      {{- if $cwf.workflow.spec.ttlStrategy.secondsAfterSuccess }}
+      secondsAfterSuccess: {{ $cwf.workflow.spec.ttlStrategy.secondsAfterSuccess }}
+      {{- end }}
+    {{- end }}
+    # pod(main, init, wait container) config
+    automountServiceAccountToken: false
+    serviceAccountName: {{ $.Values.domainCode }}-sa
+    executor:
+      serviceAccountName: {{ $.Values.domainCode }}-sa
+    {{- include "ddd-helm.po.securityContext" $cwf.workflow.spec.securityContext | nindent 4 }}
+    # affinity:
+    {{- if $cwf.workflow.spec.nodeSelector }}
+    nodeSelector:
+      {{- toYaml $cwf.workflow.spec.nodeSelector | nindent 6 }}
+    {{- end }}
+    # tolerations:
+    {{- if $cwf.workflow.spec.parallelism }}
+    parallelism: {{ $cwf.workflow.spec.parallelism }}
+    {{- end }}
+    # podDisruptionBudget:
+    {{- if $cwf.workflow.spec.podGC }}
+    podGC:
+      {{- if $cwf.workflow.spec.podGC.deleteDelayDuration }}
+      deleteDelayDuration: {{ $cwf.workflow.spec.podGC.deleteDelayDuration | quote }}
+      {{- end }}
+      {{- if $cwf.workflow.spec.podGC.labelSelector }}
+      labelSelector:
+        {{- if $cwf.workflow.spec.podGC.labelSelector.matchExpressions }}
+        matchExpressions:
+          {{- toYaml $cwf.workflow.spec.podGC.labelSelector.matchExpressions | nindent 10 }}
+        {{- end }}
+        {{- if $cwf.workflow.spec.podGC.labelSelector.matchLabels }}
+        matchLabels:
+          {{- toYaml $cwf.workflow.spec.podGC.labelSelector.matchLabels | nindent 10 }}
+        {{- end }}
+      {{- end }}
+      {{- if $cwf.workflow.spec.podGC.strategy }}
+      strategy: {{ $cwf.workflow.spec.podGC.strategy | quote }}
+      {{- end }}
+    {{- end }}
+    {{- if $cwf.workflow.spec.podMetadata }}
+    podMetadata:
+      {{- if or $cwf.workflow.spec.podMetadata.labelsTemplate $cwf.workflow.spec.podMetadata.labels }}
+      labels:
+        {{- if $cwf.workflow.spec.podMetadata.labelsTemplate }}
+        {{- tpl $cwf.workflow.spec.podMetadata.labelsTemplate $ | nindent 8 }}
+        {{- end }}
+        {{- if $cwf.workflow.spec.podMetadata.labels }}
+        {{- toYaml $cwf.workflow.spec.podMetadata.labels | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- if or $cwf.workflow.spec.podMetadata.annotationsTemplate $cwf.workflow.spec.podMetadata.annotations }}
+      annotations:
+        {{- if $cwf.workflow.spec.podMetadata.annotationsTemplate }}
+        {{- tpl $cwf.workflow.spec.podMetadata.annotationsTemplate $ | nindent 8 }}
+        {{- end }}
+        {{- if $cwf.workflow.spec.podMetadata.annotations}}
+        {{- toYaml $cwf.workflow.spec.podMetadata.annotations | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+    # podPriorityClassName:
+    {{- if $cwf.workflow.spec.podSpecPatch }}
+    podSpecPatch:
+      {{- toYaml $cwf.workflow.spec.podSpecPatch | nindent 6 }}
+    {{- end }}
+    # workflow config
+    {{- if $cwf.workflow.spec.metrics }}
+    {{- include "ddd-helm.cwf.metrics" $cwf.workflow.spec.metrics | nindent 4 }}
+    {{- end }}
+    {{- if $cwf.workflow.spec.arguments }}
+    arguments:
+      # artifacts:
+      {{- if $cwf.workflow.spec.arguments.parameters }}
+      {{- include "ddd-helm.cwf.parameters" $cwf.workflow.spec.arguments.parameters | nindent 6 }}
+      {{- end }}
+    {{- end }}
+    entrypoint: {{ $cwf.workflow.spec.entrypoint | quote }}
+    {{- if $cwf.workflow.spec.hooks }}
+    {{- include "ddd-helm.cwf.hooks" $cwf.workflow.spec.hooks | nindent 4 }}
+    {{- end }}
+    {{- if $cwf.workflow.spec.onExit }}
+    onExit: {{ $cwf.workflow.spec.onExit | quote }}
+    {{- end }}
+    {{- if $cwf.workflow.spec.shutdown }}
+    shutdown: {{ $cwf.workflow.spec.shutdown | quote }}
+    {{- end }}
+    {{- if $cwf.workflow.spec.suspend }}
+    suspend: {{ $cwf.workflow.spec.suspend }}
+    {{- end }}
+    # templateDefaults:
+    {{- if $cwf.workflow.spec.templates }}
+    templates:
+      {{- range $cwf.workflow.spec.templates }}
+        # template config
+      - name: {{ .name | quote }}
+        {{- if .retryStrategy }}
+        {{- include "ddd-helm.cwf.retryStrategy" .retryStrategy | nindent 8 }}
+        {{- end }}
+        {{- if .daemon }}
+        daemon: {{ .daemon }}
+        {{- end }}
+        {{- if .failFast }}
+        failFast: {{ .failFast }}
+        {{- end }}
+        {{- if .timeout }}
+        timeout: {{ .timeout | quote }}
+        {{- end }}
+        {{- if .synchronization }}
+        {{- include "ddd-helm.cwf.synchronization" .synchronization | nindent 8 }}
+        {{- end }}
+        {{- if .memoize }}
+        memoize:
+          key: {{ .memoize.key | quote }}
+          {{- if .memoize.maxAge }}
+          maxAge: {{ .memoize.maxAge | quote }}
+          {{- end }}
+          cache:
+            configMap:
+              key: {{ .memoize.cache.configMap.key | quote }}
+              name: {{ .memoize.cache.configMap.name | quote }}
+              {{- if .memoize.cache.configMap.optional }}
+              optional: {{ .memoize.cache.configMap.optional }}
+              {{- end }}
+        {{- end }}
+        {{- if .metrics }}
+        {{- include "ddd-helm.cwf.metrics" .metrics | nindent 8 }}
+        {{- end }}
+        {{- if .inputs }}
+        inputs:
+          # artifacts:
+          {{- if .inputs.parameters }}
+          {{- include "ddd-helm.cwf.parameters" .inputs.parameters | nindent 10 }}
+          {{- end }}
+        {{- end }}
+        {{- if .outputs }}
+        outputs:
+          # artifacts:
+          # exitCode:
+          # result:
+          {{- if .outputs.parameters }}
+          {{- include "ddd-helm.cwf.parameters" .outputs.parameters | nindent 10 }}
+          {{- end }}
+        {{- end }}
+        # pod(main, init, wait container) config
+        {{- if .activeDeadlineSeconds }}
+        activeDeadlineSeconds: {{ .activeDeadlineSeconds }}
+        {{- end }}
+        automountServiceAccountToken: false
+        serviceAccountName: {{ $.Values.domainCode }}-sa
+        executor:
+          serviceAccountName: {{ $.Values.domainCode }}-sa
+        {{- include "ddd-helm.po.securityContext" $cwf.workflow.spec.securityContext | nindent 8 }}
+        # affinity:
+        {{- if .nodeSelector }}
+        nodeSelector:
+          {{- toYaml .nodeSelector | nindent 10 }}
+        {{- end }}
+        # tolerations:
+        {{- if .parallelism }}
+        parallelism: {{ .parallelism }}
+        {{- end }}
+        {{- if .metadata }}
+        metadata:
+          {{- if or .metadata.labelsTemplate .metadata.labels }}
+          labels:
+            {{- if .metadata.labelsTemplate }}
+            {{- tpl .metadata.labelsTemplate $ | nindent 12 }}
+            {{- end }}
+            {{- if .metadata.labels}}
+            {{- toYaml .metadata.labels | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          {{- if or .metadata.annotationsTemplate .metadata.annotations }}
+          annotations:
+            {{- if .metadata.annotationsTemplate }}
+            {{- tpl .metadata.annotationsTemplate $ | nindent 12 }}
+            {{- end }}
+            {{- if .metadata.annotations }}
+            {{- toYaml .metadata.annotations | nindent 12 }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+        # priorityClassName:
+        # priority:
+        {{- if .podSpecPatch }}
+        podSpecPatch:
+          {{- toYaml .podSpecPatch | nindent 10 }}
+        {{- end }}
+        # initContainers:
+        {{- if eq .type "container" }}
+        container:
+          name: "{{ $.Values.domainCode }}-{{ $app.name }}"
+          image: "{{ .container.image.name }}:{{ .container.image.tag }}"
+          {{- if .container.imagePullPolicy }}
+          imagePullPolicy: {{ .container.imagePullPolicy | quote }}
+          {{- end }}
+          {{- if .container.command }}
+          command:
+            {{- toYaml .container.command | nindent 12 }}
+          {{- end }}
+          {{- if .container.args }}
+          args:
+            {{- toYaml .container.args | nindent 12 }}
+          {{- end }}
+          {{- if .container.workingDir }}
+          workingDir: {{ .container.workingDir | quote }}
+          {{- end }}
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          {{- if .container.ports }}
+          ports:
+            {{- range .container.ports }}
+            - name: {{ .name | quote }}
+              protocol: {{ .protocol | quote }}
+              containerPort: {{ .containerPort }}
+            {{- end }}
+          {{- end }}
+          {{- if or .container.resources.requests .container.resources.limits }}
+          resources:
+            {{- if .container.resources.requests }}
+            requests:
+              {{- if .container.resources.requests.memory }}
+              memory: {{ .container.resources.requests.memory | quote }}
+              {{- end }}
+              {{- if .container.resources.requests.cpu }}
+              cpu: {{ .container.resources.requests.cpu | quote }}
+              {{- end }}
+            {{- end }}
+            {{- if .container.resources.limits }}
+            limits:
+              {{- if .container.resources.limits.memory }}
+              memory: {{ .container.resources.limits.memory | quote }}
+              {{- end }}
+              {{- if .container.resources.limits.cpu }}
+              cpu: {{ .container.resources.limits.cpu | quote }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- if .container.lifecycle }}
+          lifecycle:
+            {{- if .container.lifecycle.preStop }}
+            preStop:
+              {{- if .container.lifecycle.preStop.exec.command }}
+              exec:
+                command:
+                  {{- toYaml .container.lifecycle.preStop.exec.command | nindent 18 }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- if .container.ports }}
+          {{- if .container.livenessProbe }}
+          livenessProbe:
+            {{- if eq .container.livenessProbe.type "httpGet" }}
+            httpGet:
+              port: {{ .container.livenessProbe.httpGet.port }}
+              {{- if .container.livenessProbe.httpGet.httpHeaders }}
+              httpHeaders:
+                {{- toYaml .container.livenessProbe.httpGet.httpHeaders | nindent 16 }}
+              {{- end }}
+              path: {{ .container.livenessProbe.httpGet.path | quote }}
+              {{- if .container.livenessProbe.httpGet.scheme }}
+              scheme: {{ .container.livenessProbe.httpGet.scheme | quote }}
+              {{- end }}
+            {{- else if eq .container.livenessProbe.type "tcpSocket" }}
+            tcpSocket:
+              port: {{ .container.livenessProbe.tcpSocket.port }}
+            {{- end }}
+            {{- if .container.livenessProbe.initialDelaySeconds }}
+            initialDelaySeconds: {{ .container.livenessProbe.initialDelaySeconds }}
+            {{- end }}
+            {{- if .container.livenessProbe.periodSeconds }}
+            periodSeconds: {{ .container.livenessProbe.periodSeconds }}
+            {{- end }}
+            {{- if .container.livenessProbe.timeoutSeconds }}
+            timeoutSeconds: {{ .container.livenessProbe.timeoutSeconds }}
+            {{- end }}
+            {{- if .container.livenessProbe.failureThreshold }}
+            failureThreshold: {{ .container.livenessProbe.failureThreshold }}
+            {{- end }}
+            successThreshold: 1
+          {{- end }}
+          {{- if .container.readinessProbe }}
+          readinessProbe:
+            {{- if eq .container.readinessProbe.type "httpGet" }}
+            httpGet:
+              port: {{ .container.readinessProbe.httpGet.port }}
+              {{- if .container.readinessProbe.httpGet.httpHeaders }}
+              httpHeaders:
+                {{- toYaml .container.readinessProbe.httpGet.httpHeaders | nindent 16 }}
+              {{- end }}
+              path: {{ .container.readinessProbe.httpGet.path | quote }}
+              {{- if .container.readinessProbe.httpGet.scheme }}
+              scheme: {{ .container.readinessProbe.httpGet.scheme | quote }}
+              {{- end }}
+            {{- else if eq .container.readinessProbe.type "tcpSocket" }}
+            tcpSocket:
+              port: {{ .container.readinessProbe.tcpSocket.port }}
+            {{- end }}
+            {{- if .container.readinessProbe.periodSeconds }}
+            periodSeconds: {{ .container.readinessProbe.periodSeconds }}
+            {{- end }}
+            {{- if .container.readinessProbe.timeoutSeconds }}
+            timeoutSeconds: {{ .container.readinessProbe.timeoutSeconds }}
+            {{- end }}
+            {{- if .container.readinessProbe.failureThreshold }}
+            failureThreshold: {{ .container.readinessProbe.failureThreshold }}
+            {{- end }}
+            {{- if .container.readinessProbe.failureThreshold }}
+            successThreshold: {{ .container.readinessProbe.successThreshold }}
+            {{- end }}
+          {{- end }}
+          {{- if .container.startupProbe }}
+          startupProbe:
+            {{- if eq .container.startupProbe.type "httpGet" }}
+            httpGet:
+              port: {{ .container.startupProbe.httpGet.port }}
+              {{- if .container.startupProbe.httpGet.httpHeaders }}
+              httpHeaders:
+                {{- toYaml .container.startupProbe.httpGet.httpHeaders | nindent 16 }}
+              {{- end }}
+              path: {{ .container.startupProbe.httpGet.path | quote }}
+              {{- if .container.startupProbe.httpGet.scheme }}
+              scheme: {{ .container.startupProbe.httpGet.scheme | quote }}
+              {{- end }}
+            {{- else if eq .container.startupProbe.type "tcpSocket" }}
+            tcpSocket:
+              port: {{ .container.startupProbe.tcpSocket.port }}
+            {{- end }}
+            {{- if .container.startupProbe.periodSeconds }}
+            periodSeconds: {{ .container.startupProbe.periodSeconds }}
+            {{- end }}
+            {{- if .container.startupProbe.timeoutSeconds }}
+            timeoutSeconds: {{ .container.startupProbe.timeoutSeconds }}
+            {{- end }}
+            {{- if .container.startupProbe.failureThreshold }}
+            failureThreshold: {{ .container.startupProbe.failureThreshold }}
+            {{- end }}
+            successThreshold: 1
+          {{- end }}
+          {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ $.Values.domainCode }}-cm
+            {{- if $app.cm.enabled }}
+            - configMapRef:
+                name: {{ $.Values.domainCode }}-{{ $app.name }}-cm
+            {{- end }}
+            {{- if and $app.spc.enabled $app.spc.sec.enabled $app.spc.sec.envMount.enabled }}
+            - secretRef:
+                name: {{ $.Values.domainCode }}-{{ $app.name }}-sec
+            {{- end }}
+          {{- if or $app.spc.enabled $app.pv.enabled .container.volumeMounts }}
+          volumeMounts:
+            {{- if $app.spc.enabled }}
+            - name: {{ $.Values.domainCode }}-{{ $app.name }}-spc
+              mountPath: {{ $app.spc.fileMount.path | quote }}
+              readOnly: true
+            {{- end }}
+            {{- if $app.pv.enabled }}
+            - name: {{ $.Values.domainCode }}-{{ $app.name }}-static-pv
+              mountPath: {{ $app.pv.fileMount.path | quote }}
+              {{- if $app.pv.fileMount.readOnly }}
+              readOnly: true
+              {{- end }}
+              {{- if $app.pv.fileMount.subPath }}
+              subPath: {{ $app.pv.fileMount.subPath | quote }}
+              {{- end }}
+            {{- end }}
+            {{- range .container.volumeMounts }}
+            - name: {{ .name | quote }}
+              mountPath: {{ .mountPath | quote }}
+              {{- if .mountPropagation }}
+              mountPropagation: {{ .mountPropagation | quote }}
+              {{- end }}
+              {{- if .readOnly }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
+              {{- if .recursiveReadOnly }}
+              recursiveReadOnly: {{ .recursiveReadOnly | quote }}
+              {{- end }}
+              {{- if .subPath }}
+              subPath: {{ .subPath | quote }}
+              {{- end }}
+              {{- if .subPathExpr }}
+              subPathExpr: {{ .subPathExpr | quote }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+        # {{- else if eq .type "containerSet" }}
+        # containerSet:
+        # {{- else if eq .type "resource" }}
+        # resource:
+        # {{- else if eq .type "data" }}
+        # data:
+        # {{- else if eq .type "http" }}
+        # http:
+        # {{- else if eq .type "script" }}
+        # script:
+        # {{- else if eq .type "steps" }}
+        # steps:
+        # {{- else if eq .type "suspend" }}
+        # suspend:
+        # {{- else if eq .type "plugin" }}
+        # plugin:
+        {{- else if eq .type "dag" }}
+        dag:
+          {{- if .dag.failFast }}
+          failFast: {{ .dag.failFast }}
+          {{- end }}
+          {{- if .dag.target }}
+          target: {{ .dag.target | quote }}
+          {{- end }}
+          tasks:
+            {{- range .dag.tasks }}
+            - name: {{ .name }}
+              {{- if .template }}
+              template: {{ .template | quote }}
+              {{- end }}
+              {{- if .templateRef }}
+              templateRef:
+                {{- if .templateRef.clusterScope }}
+                clusterScope: {{ .templateRef.clusterScope }}
+                {{- end }}
+                name: {{ .templateRef.name | quote }}
+                template: {{ .templateRef.template | quote }}
+              # inline:
+              {{- end }}
+              {{- if .arguments }}
+              arguments:
+                # artifacts:
+                {{- if .arguments.parameters }}
+                {{- include "ddd-helm.cwf.parameters" .arguments.parameters | nindent 16 }}
+                {{- end }}
+              {{- end }}
+              {{- if .withItems }}
+              withItems:
+                {{- toYaml .withItems | nindent 16 }}
+              {{- end }}
+              {{- if .withParam }}
+              withParam:
+                {{- toYaml .withParam | nindent 16 }}
+              {{- end }}
+              {{- if .withSequence }}
+              withSequence:
+                {{- if .withSequence.count }}
+                count: {{ .withSequence.count | quote }}
+                {{- end }}
+                {{- if .withSequence.start }}
+                start: {{ .withSequence.start | quote }}
+                {{- end }}
+                {{- if .withSequence.end }}
+                end: {{ .withSequence.end | quote }}
+                {{- end }}
+                {{- if .withSequence.format }}
+                format: {{ .withSequence.format | quote }}
+                {{- end }}
+              {{- end }}
+              {{- if .continueOn }}
+              continueOn:
+                {{- if .continueOn.error }}
+                error:
+                {{- end }}
+                {{- if .continueOn.failed }}
+                failed:
+                {{- end }}
+              {{- end }}
+              {{- if .dependencies }}
+              dependencies:
+                {{- toYaml .dependencies | nindent 16 }}
+              {{- end }}
+              {{- if .depends }}
+              depends: {{ .depends | quote }}
+              {{- end }}
+              {{- if .when }}
+              when: {{ .when | quote }}
+              {{- end }}
+              {{- if .hooks }}
+              {{- include "ddd-helm.cwf.hooks" .hooks | nindent 14 }}
+              {{- end }}
+            {{- end }}
+        {{- end }}
+        # volumes:
+      {{- end }}
+    {{- end }}
+    # workflowMetadata:
+    {{- if $cwf.workflow.spec.workflowTemplateRef }}
+    workflowTemplateRef:
+      {{- if $cwf.workflow.spec.workflowTemplateRef.clusterScope }}
+      clusterScope: {{ $cwf.workflow.spec.workflowTemplateRef.clusterScope }}
+      {{- end }}
+      name: {{ $cwf.workflow.spec.workflowTemplateRef.name | quote }}
+    {{- end }}
+    {{- if $cwf.workflow.spec.volumeClaimGC }}
+    volumeClaimGC:
+      strategy: {{ $cwf.workflow.spec.volumeClaimGC.strategy | quote }}
+    {{- end }}
+    # volumeClaimTemplates:
+    {{- if or $app.spc.enabled $app.pv.enabled $cwf.workflow.spec.volumes }}
+    volumes:
+      {{- if $app.spc.enabled }}
+      - name: {{ $.Values.domainCode }}-{{ $app.name }}-spc
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: {{ $.Values.domainCode }}-{{ $app.name }}-spc
+      {{- end }}
+      {{- if $app.pv.enabled }}
+      - name: {{ $.Values.domainCode }}-{{ $app.name }}-static-pv
+        persistentVolumeClaim:
+          claimName: {{ $.Values.domainCode }}-{{ $app.name }}-static-pvc
+          {{- if $app.pv.fileMount.readOnly }}
+          readOnly: true
+          {{- end }}
+      {{- end }}
+      {{- if $cwf.workflow.spec.volumes }}
+      {{- range $cwf.workflow.spec.volumes }}
+      - name: {{ .name | quote }}
+        {{- if eq .type "emptyDir" }}
+        emptyDir:
+          {{- if .emptyDir.medium }}
+          medium: {{ .emptyDir.medium | quote }}
+          {{- end }}
+          {{- if .emptyDir.sizeLimit }}
+          sizeLimit: {{ .emptyDir.sizeLimit | quote }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+      {{- end }}
+    {{- end }}
+---
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}

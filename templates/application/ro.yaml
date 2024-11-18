@@ -1,0 +1,549 @@
+{{- if .Values.common.ns.enabled }}
+{{- range $app := .Values.application -}}
+{{- if $app.ro.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: {{ $.Values.domainCode }}-{{ $app.name }}-ro
+  namespace: {{ include "ddd-helm.namespace" $ }}
+  labels:
+    {{- if $app.ro.datadog.enabled }}
+    tags.datadoghq.com/env: {{ $.Values.environment }}
+    tags.datadoghq.com/service: {{ $.Values.domainCode }}-{{ $app.name }}
+    tags.datadoghq.com/version: {{ $app.ro.template.poSpec.container.image.tag }}
+    {{- end }}
+    {{- include "ddd-helm.commonLabels" $ | nindent 4 }}
+    {{- include "ddd-helm.componentLabel" $app | nindent 4 }}
+    {{- if $app.ro.labelsTemplate }}
+    {{- tpl $app.ro.labelsTemplate $ | nindent 4 }}
+    {{- end }}
+    {{- if $app.ro.labels }}
+    {{- toYaml $app.ro.labels | nindent 4 }}
+    {{- end }}
+  {{- if or $app.ro.annotationsTemplate $app.ro.annotations }}
+  annotations:
+    {{- if $app.ro.annotationsTemplate }}
+    {{- tpl $app.ro.annotationsTemplate $ | nindent 4 }}
+    {{- end }}
+    {{- if $app.ro.annotations }}
+    {{- toYaml $app.ro.annotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
+spec:
+  {{- if and (not $app.hpa.enabled) }}
+  replicas: {{ $app.ro.replicas }}
+  {{- end }}
+  # analysis:
+  {{- if $app.ro.minReadySeconds }}
+  minReadySeconds: {{ $app.ro.minReadySeconds }}
+  {{- end }}
+  {{- if $app.ro.revisionHistoryLimit }}
+  revisionHistoryLimit: {{ $app.ro.revisionHistoryLimit }}
+  rollbackWindow:
+    revisions: {{ $app.ro.revisionHistoryLimit }}
+  {{- end }}
+  {{- if $app.ro.paused }}
+  paused: {{ $app.ro.paused }}
+  {{- end }}
+  {{- if $app.ro.progressDeadlineSeconds }}
+  progressDeadlineSeconds: {{ $app.ro.progressDeadlineSeconds }}
+  {{- end }}
+  {{- if $app.ro.progressDeadlineAbort }}
+  progressDeadlineAbort: {{ $app.ro.progressDeadlineAbort }}
+  {{- end }}
+  {{- if $app.ro.restartAt }}
+  restartAt: {{ $app.ro.restartAt }}
+  {{- end }}
+  strategy:
+    {{- if eq $app.ro.strategy.type "blueGreen" }}
+    blueGreen:
+      activeService: {{ $.Values.domainCode }}-{{ $app.name }}-stable-svc
+      previewService:  {{ $.Values.domainCode }}-{{ $app.name }}-update-svc
+      {{- if $app.ro.strategy.blueGreen.previewReplicaCount }}
+      previewReplicaCount: {{ $app.ro.strategy.blueGreen.previewReplicaCount }}
+      {{- end }}
+      {{- if $app.ro.strategy.blueGreen.autoPromotionEnabled }}
+      autoPromotionEnabled: {{ $app.ro.strategy.blueGreen.autoPromotionEnabled }}
+      {{- end }}
+      {{- if $app.ro.strategy.blueGreen.autoPromotionSeconds }}
+      autoPromotionSeconds: {{ $app.ro.strategy.blueGreen.autoPromotionSeconds  }}
+      {{- end }}
+      {{- if $app.ro.strategy.blueGreen.scaleDownDelaySeconds }}
+      scaleDownDelaySeconds: {{ $app.ro.strategy.blueGreen.scaleDownDelaySeconds }}
+      {{- end }}
+      {{- if $app.ro.strategy.blueGreen.scaleDownDelayRevisionLimit }}
+      scaleDownDelayRevisionLimit: {{ $app.ro.strategy.blueGreen.scaleDownDelayRevisionLimit }}
+      {{- end }}
+      {{- if $app.ro.strategy.blueGreen.abortScaleDownDelaySeconds }}
+      abortScaleDownDelaySeconds: {{ $app.ro.strategy.blueGreen.abortScaleDownDelaySeconds }}
+      {{- end }}
+      # prePromotionAnalysis:
+      # postPromotionAnalysis:
+      # antiAffinity:
+    # {{- else if eq $app.ro.strategy.type "canary" }}
+    # canary:
+    #   stableService: {{ $.Values.domainCode }}-{{ $app.name }}-stable-svc
+    #   canaryService: {{ $.Values.domainCode }}-{{ $app.name }}-update-svc
+    #   {{- if or ($app.ro.strategy.canary.metadata.canary.annotations) ($app.ro.strategy.canary.metadata.canary.labels) }}
+    #   canaryMetadata:
+    #     {{- if $app.ro.strategy.canary.metadata.canary.annotations }}
+    #     annotations:
+    #       {{- toYaml $app.ro.strategy.canary.metadata.canary.annotations | nindent 10 }}
+    #     {{- end }}
+    #     {{- if $app.ro.strategy.canary.metadata.canary.labels }}
+    #     labels:
+    #       {{- toYaml $app.ro.strategy.canary.metadata.canary.labels | nindent 10 }}
+    #     {{- end }}
+    #   {{- end }}
+    #   {{- if or ($app.ro.strategy.canary.metadata.stable.annotations) ($app.ro.strategy.canary.metadata.stable.labels) }}
+    #   stableMetadata:
+    #     {{- if $app.ro.strategy.canary.metadata.stable.annotations }}
+    #     annotations:
+    #       {{- toYaml $app.ro.strategy.canary.metadata.stable.annotations | nindent 10 }}
+    #     {{- end }}
+    #     {{- if $app.ro.strategy.canary.metadata.stable.labels }}
+    #     labels:
+    #       {{- toYaml $app.ro.strategy.canary.metadata.stable.labels | nindent 10 }}
+    #     {{- end }}
+    #   {{- end }}
+    #   {{- if $app.ro.strategy.canary.maxUnavailable }}
+    #   maxUnavailable: {{ $app.ro.strategy.canary.maxUnavailable }}
+    #   {{- end }}
+    #   {{- if $app.ro.strategy.canary.maxSurge }}
+    #   maxSurge: {{ $app.ro.strategy.canary.maxSurge }}
+    #   {{- end }}
+    #   {{- if $app.ro.strategy.canary.dynamicStableScale }}
+    #   dynamicStableScale: {{ $app.ro.strategy.canary.dynamicStableScale }}
+    #   {{- end }}
+    #   {{- if $app.ro.strategy.canary.scaleDownDelaySeconds }}
+    #   scaleDownDelaySeconds: {{ $app.ro.strategy.canary.scaleDownDelaySeconds }}
+    #   {{- end }}
+    #   {{- if $app.ro.strategy.canary.minPodsPerReplicaSet }}
+    #   minPodsPerReplicaSet: {{ $app.ro.strategy.canary.minPodsPerReplicaSet }}
+    #   {{- end }}
+    #   {{- if $app.ro.strategy.canary.scaleDownDelayRevisionLimit }}
+    #   scaleDownDelayRevisionLimit: {{ $app.ro.strategy.canary.scaleDownDelayRevisionLimit }}
+    #   {{- end }}
+    #   {{- if $app.ro.strategy.canary.abortScaleDownDelaySeconds }}
+    #   abortScaleDownDelaySeconds: {{ $app.ro.strategy.canary.abortScaleDownDelaySeconds }}
+    #   {{- end }}
+    #   steps:
+    #     {{- toYaml $app.ro.strategy.canary.steps | nindent 8 }}
+    #   {{- if $app.ro.strategy.canary.trafficRouting.enabled }}
+    #   trafficRouting:
+    #     {{- if $app.ro.strategy.canary.trafficRouting.alb.enabled }}
+    #     alb:
+    #       ingress:
+    #       servicePort:
+    #       {{- if $app.ro.strategy.canary.trafficRouting.alb.rootSvc.enabled }}
+    #       rootService: {{ $.Values.domainCode }}-{{ $app.name }}-root-svc
+    #       {{- end }}
+    #       {{- if $app.ro.strategy.canary.trafficRouting.alb.annotationPrefix }}
+    #       annotationPrefix: {{ $app.ro.strategy.canary.trafficRouting.alb.annotationPrefix }}
+    #       {{- end }}
+    #       {{- if $app.ro.strategy.canary.trafficRouting.alb.stickySession.enabled }}
+    #       stickinessConfig:
+    #         enabled: true
+    #         durationSeconds: {{ $app.ro.strategy.canary.trafficRouting.alb.stickySession.duration }}
+    #       {{- end }}
+    #     {{- end }}
+    #   {{- end }}
+    #   # analysis:
+    #   # antiAffinity:
+    {{- else if eq $app.ro.strategy.type "bestEffortCanary" }}
+    canary:
+      {{- if or ($app.ro.strategy.bestEffortCanary.metadata.canary.annotations) ($app.ro.strategy.bestEffortCanary.metadata.canary.labels) }}
+      canaryMetadata:
+        {{- if $app.ro.strategy.bestEffortCanary.metadata.canary.annotations }}
+        annotations:
+          {{- toYaml $app.ro.strategy.bestEffortCanary.metadata.canary.annotations | nindent 10 }}
+        {{- end }}
+        {{- if $app.ro.strategy.bestEffortCanary.metadata.canary.labels }}
+        labels:
+          {{- toYaml $app.ro.strategy.bestEffortCanary.metadata.canary.labels | nindent 10 }}
+        {{- end }}
+      {{- end }}
+      {{- if or ($app.ro.strategy.bestEffortCanary.metadata.stable.annotations) ($app.ro.strategy.bestEffortCanary.metadata.stable.labels) }}
+      stableMetadata:
+        {{- if $app.ro.strategy.bestEffortCanary.metadata.stable.annotations }}
+        annotations:
+          {{- toYaml $app.ro.strategy.bestEffortCanary.metadata.stable.annotations | nindent 10 }}
+        {{- end }}
+        {{- if $app.ro.strategy.bestEffortCanary.metadata.stable.labels }}
+        labels:
+          {{- toYaml $app.ro.strategy.bestEffortCanary.metadata.stable.labels | nindent 10 }}
+        {{- end }}
+      {{- end }}
+      {{- if $app.ro.strategy.bestEffortCanary.maxUnavailable }}
+      maxUnavailable: {{ $app.ro.strategy.bestEffortCanary.maxUnavailable }}
+      {{- end }}
+      {{- if $app.ro.strategy.bestEffortCanary.maxSurge }}
+      maxSurge: {{ $app.ro.strategy.bestEffortCanary.maxSurge }}
+      {{- end }}
+      {{- if $app.ro.strategy.bestEffortCanary.scaleDownDelayRevisionLimit }}
+      scaleDownDelayRevisionLimit: {{ $app.ro.strategy.bestEffortCanary.scaleDownDelayRevisionLimit }}
+      {{- end }}
+      steps:
+        {{- toYaml $app.ro.strategy.bestEffortCanary.steps | nindent 8 }}
+      # analysis:
+      # antiAffinity:
+    {{- else if eq $app.ro.strategy.type "rollingUpdate" }}
+    canary:
+      {{- if $app.ro.strategy.rollingUpdate.maxUnavailable }}
+      maxUnavailable: {{ $app.ro.strategy.rollingUpdate.maxUnavailable }}
+      {{- end }}
+      {{- if $app.ro.strategy.rollingUpdate.maxSurge }}
+      maxSurge: {{ $app.ro.strategy.rollingUpdate.maxSurge }}
+      {{- end }}
+      steps: []
+    {{- end }}
+  selector:
+    matchLabels:
+      {{- include "ddd-helm.componentLabel" $app | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ddd-helm.componentLabel" $app | nindent 8 }}
+        {{- if $app.ro.datadog.enabled }}
+        tags.datadoghq.com/env: {{ $.Values.environment }}
+        tags.datadoghq.com/service: {{ $.Values.domainCode }}-{{ $app.name }}
+        tags.datadoghq.com/version: {{ $app.ro.template.poSpec.container.image.tag }}
+        admission.datadoghq.com/enabled: "true"
+        admission.datadoghq.com/config.mode: "socket"
+        {{- end }}
+        {{- if $app.ro.labelsTemplate }}
+        {{- tpl $app.ro.labelsTemplate $ | nindent 8 }}
+        {{- end }}
+        {{- if $app.ro.labels }}
+        {{- toYaml $app.ro.labels | nindent 8 }}
+        {{- end }}
+      {{- if or (and $app.ro.datadog.enabled $app.ro.datadog.libInjection.enabled) $app.ro.annotationsTemplate }}
+      annotations:
+        {{- if and $app.ro.datadog.enabled $app.ro.datadog.libInjection.enabled }}
+        admission.datadoghq.com/{{ $app.ro.datadog.libInjection.language }}-lib.version: {{ $app.ro.datadog.libInjection.version }}
+        {{- end }}
+        {{- if $app.ro.annotationsTemplate }}
+        {{- tpl $app.ro.annotationsTemplate $ | nindent 8 }}
+        {{- end }}
+        {{- if $app.ro.annotations }}
+        {{- toYaml $app.ro.annotations | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    spec:
+      {{- if $app.ro.template.poSpec.enableServiceLinks }}
+      enableServiceLinks: {{ $app.ro.template.poSpec.enableServiceLinks }}
+      {{- end }}
+      {{- if $app.ro.template.poSpec.restartPolicy }}
+      restartPolicy: {{ $app.ro.template.poSpec.restartPolicy }}
+      {{- end }}
+      {{- if $app.ro.template.poSpec.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ $app.ro.template.poSpec.terminationGracePeriodSeconds }}
+      {{- end }}
+      automountServiceAccountToken: false
+      serviceAccountName: {{ $.Values.domainCode }}-sa
+      hostNetwork: false
+      hostPID: false
+      hostIPC: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: {{ $app.ro.template.poSpec.securityContext.runAsUser }}
+        runAsGroup: {{ $app.ro.template.poSpec.securityContext.runAsGroup }}
+        {{- if $app.ro.template.poSpec.securityContext.supplementalGroups }}
+        supplementalGroups: {{ $app.ro.template.poSpec.securityContext.supplementalGroups }}
+        {{- end }}
+        {{- if $app.ro.template.poSpec.securityContext.fsGroup }}
+        fsGroup: {{ $app.ro.template.poSpec.securityContext.fsGroup }}
+        {{- end }}
+        {{- if $app.ro.template.poSpec.securityContext.fsGroupChangePolicy }}
+        fsGroupChangePolicy: {{ $app.ro.template.poSpec.securityContext.fsGroupChangePolicy }}
+        {{- end }}
+      containers:
+        - name: "{{ $.Values.domainCode }}-{{ $app.name }}"
+          image: "{{ $app.ro.template.poSpec.container.image.name }}:{{ $app.ro.template.poSpec.container.image.tag }}"
+          {{- if $app.ro.template.poSpec.container.image.pullPolicy }}
+          imagePullPolicy: {{ $app.ro.template.poSpec.container.image.pullPolicy }}
+          {{- end }}
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          {{- if $app.ro.template.poSpec.container.ports }}
+          ports:
+            {{- range $app.ro.template.poSpec.container.ports }}
+            - name: {{ .name }}
+              protocol: {{ .protocol }}
+              containerPort: {{ .containerPort }}
+            {{- end }}
+          {{- end }}
+          {{- if or $app.ro.template.poSpec.container.resources.requests.enabled $app.ro.template.poSpec.container.resources.limits.enabled }}
+          resources:
+            {{- if $app.ro.template.poSpec.container.resources.requests.enabled }}
+            requests:
+              {{- if $app.ro.template.poSpec.container.resources.requests.memory }}
+              memory: {{ $app.ro.template.poSpec.container.resources.requests.memory }}
+              {{- end }}
+              {{- if $app.ro.template.poSpec.container.resources.requests.cpu }}
+              cpu: {{ $app.ro.template.poSpec.container.resources.requests.cpu }}
+              {{- end }}
+            {{- end }}
+            {{- if $app.ro.template.poSpec.container.resources.limits.enabled }}
+            limits:
+              {{- if $app.ro.template.poSpec.container.resources.limits.memory }}
+              memory: {{ $app.ro.template.poSpec.container.resources.limits.memory }}
+              {{- end }}
+              {{- if $app.ro.template.poSpec.container.resources.limits.cpu }}
+              cpu: {{ $app.ro.template.poSpec.container.resources.limits.cpu }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  {{- toYaml $app.ro.template.poSpec.container.hook.preStop.exec.command | nindent 18 }}
+          {{- if $app.ro.template.poSpec.container.ports }}
+          {{- if $app.ro.template.poSpec.container.probe.liveness.enabled }}
+          livenessProbe:
+            {{- if eq $app.ro.template.poSpec.container.probe.liveness.type "httpGet" }}
+            httpGet:
+              port: {{ $app.ro.template.poSpec.container.probe.liveness.httpGet.port }}
+              {{- if $app.ro.template.poSpec.container.probe.liveness.httpGet.httpHeaders }}
+              httpHeaders:
+                {{- toYaml $app.ro.template.poSpec.container.probe.liveness.httpGet.httpHeaders | nindent 16 }}
+              {{- end }}
+              path: {{ $app.ro.template.poSpec.container.probe.liveness.httpGet.path }}
+              {{- if $app.ro.template.poSpec.container.probe.liveness.httpGet.scheme }}
+              scheme: {{ $app.ro.template.poSpec.container.probe.liveness.httpGet.scheme }}
+              {{- end }}
+            {{- else if eq $app.ro.template.poSpec.container.probe.liveness.type "tcpSocket" }}
+            tcpSocket:
+              port: {{ $app.ro.template.poSpec.container.probe.liveness.tcpSocket.port }}
+            {{- end }}
+            {{- if $app.ro.template.poSpec.container.probe.liveness.initialDelaySeconds }}
+            initialDelaySeconds: {{ $app.ro.template.poSpec.container.probe.liveness.initialDelaySeconds }}
+            {{- end }}
+            {{- if $app.ro.template.poSpec.container.probe.liveness.periodSeconds }}
+            periodSeconds: {{ $app.ro.template.poSpec.container.probe.liveness.periodSeconds }}
+            {{- end }}
+            {{- if $app.ro.template.poSpec.container.probe.liveness.timeoutSeconds }}
+            timeoutSeconds: {{ $app.ro.template.poSpec.container.probe.liveness.timeoutSeconds }}
+            {{- end }}
+            {{- if $app.ro.template.poSpec.container.probe.liveness.failureThreshold }}
+            failureThreshold: {{ $app.ro.template.poSpec.container.probe.liveness.failureThreshold }}
+            {{- end }}
+            successThreshold: 1
+          {{- end }}
+          {{- if $app.ro.template.poSpec.container.probe.readiness.enabled }}
+          readinessProbe:
+            {{- if eq $app.ro.template.poSpec.container.probe.readiness.type "httpGet" }}
+            httpGet:
+              port: {{ $app.ro.template.poSpec.container.probe.readiness.httpGet.port }}
+              {{- if $app.ro.template.poSpec.container.probe.readiness.httpGet.httpHeaders }}
+              httpHeaders:
+                {{- toYaml $app.ro.template.poSpec.container.probe.readiness.httpGet.httpHeaders | nindent 16 }}
+              {{- end }}
+              path: {{ $app.ro.template.poSpec.container.probe.readiness.httpGet.path }}
+              {{- if $app.ro.template.poSpec.container.probe.readiness.httpGet.scheme }}
+              scheme: {{ $app.ro.template.poSpec.container.probe.readiness.httpGet.scheme }}
+              {{- end }}
+            {{- else if eq $app.ro.template.poSpec.container.probe.readiness.type "tcpSocket" }}
+            tcpSocket:
+              port: {{ $app.ro.template.poSpec.container.probe.readiness.tcpSocket.port }}
+            {{- end }}
+            {{- if $app.ro.template.poSpec.container.probe.readiness.periodSeconds }}
+            periodSeconds: {{ $app.ro.template.poSpec.container.probe.readiness.periodSeconds }}
+            {{- end }}
+            {{- if $app.ro.template.poSpec.container.probe.readiness.timeoutSeconds }}
+            timeoutSeconds: {{ $app.ro.template.poSpec.container.probe.readiness.timeoutSeconds }}
+            {{- end }}
+            {{- if $app.ro.template.poSpec.container.probe.readiness.failureThreshold }}
+            failureThreshold: {{ $app.ro.template.poSpec.container.probe.readiness.failureThreshold }}
+            {{- end }}
+            {{- if $app.ro.template.poSpec.container.probe.readiness.failureThreshold }}
+            successThreshold: {{ $app.ro.template.poSpec.container.probe.readiness.successThreshold }}
+            {{- end }}
+          {{- end }}
+          {{- if $app.ro.template.poSpec.container.probe.startup.enabled }}
+          startupProbe:
+            {{- if eq $app.ro.template.poSpec.container.probe.startup.type "httpGet" }}
+            httpGet:
+              port: {{ $app.ro.template.poSpec.container.probe.startup.httpGet.port }}
+              {{- if $app.ro.template.poSpec.container.probe.startup.httpGet.httpHeaders }}
+              httpHeaders:
+                {{- toYaml $app.ro.template.poSpec.container.probe.startup.httpGet.httpHeaders | nindent 16 }}
+              {{- end }}
+              path: {{ $app.ro.template.poSpec.container.probe.startup.httpGet.path }}
+              {{- if $app.ro.template.poSpec.container.probe.startup.httpGet.scheme }}
+              scheme: {{ $app.ro.template.poSpec.container.probe.startup.httpGet.scheme }}
+              {{- end }}
+            {{- else if eq $app.ro.template.poSpec.container.probe.startup.type "tcpSocket" }}
+            tcpSocket:
+              port: {{ $app.ro.template.poSpec.container.probe.startup.tcpSocket.port }}
+            {{- end }}
+            {{- if $app.ro.template.poSpec.container.probe.startup.periodSeconds }}
+            periodSeconds: {{ $app.ro.template.poSpec.container.probe.startup.periodSeconds }}
+            {{- end }}
+            {{- if $app.ro.template.poSpec.container.probe.startup.timeoutSeconds }}
+            timeoutSeconds: {{ $app.ro.template.poSpec.container.probe.startup.timeoutSeconds }}
+            {{- end }}
+            {{- if $app.ro.template.poSpec.container.probe.startup.failureThreshold }}
+            failureThreshold: {{ $app.ro.template.poSpec.container.probe.startup.failureThreshold }}
+            {{- end }}
+            successThreshold: 1
+          {{- end }}
+          {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ $.Values.domainCode }}-cm
+            {{- if $app.cm.enabled }}
+            - configMapRef:
+                name: {{ $.Values.domainCode }}-{{ $app.name }}-cm
+            {{- end }}
+            {{- if and $app.spc.enabled $app.spc.sec.enabled $app.spc.sec.envMount.enabled }}
+            - secretRef:
+                name: {{ $.Values.domainCode }}-{{ $app.name }}-sec
+            {{- end }}
+          {{- if or $app.spc.enabled $app.pv.enabled $app.ro.template.poSpec.container.volumeMounts }}
+          volumeMounts:
+            {{- if $app.spc.enabled }}
+            - name: {{ $.Values.domainCode }}-{{ $app.name }}-spc
+              mountPath: {{ $app.spc.fileMount.path | quote }}
+              readOnly: true
+            {{- end }}
+            {{- if $app.pv.enabled }}
+            - name: {{ $.Values.domainCode }}-{{ $app.name }}-static-pv
+              mountPath: {{ $app.pv.fileMount.path | quote }}
+              {{- if $app.pv.fileMount.readOnly }}
+              readOnly: true
+              {{- end }}
+              {{- if $app.pv.fileMount.subPath }}
+              subPath: {{ $app.pv.fileMount.subPath }}
+              {{- end }}
+            {{- end }}
+            {{- range $app.ro.template.poSpec.container.volumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .mountPropagation }}
+              mountPropagation: {{ .mountPropagation }}
+              {{- end }}
+              {{- if .readOnly }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
+              {{- if .recursiveReadOnly }}
+              recursiveReadOnly: {{ .recursiveReadOnly }}
+              {{- end }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              {{- if .subPathExpr }}
+              subPathExpr: {{ .subPathExpr }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+      {{- if $app.ro.template.poSpec.initContainers }}
+      initContainers:
+        {{- range $app.ro.template.poSpec.initContainers }}
+        - name: {{ .name }}
+          image: {{ .image }}
+          {{- if .imagePullPolicy }}
+          imagePullPolicy: {{ .imagePullPolicy }}
+          {{- end }}
+          {{- if .command }}
+          command:
+            {{- toYaml .command | nindent 12 }}
+          {{- end }}
+          {{- if .args }}
+          args:
+            {{- toYaml .args | nindent 12 }}
+          {{- end }}
+          {{- if .workingDir }}
+          workingDir: {{ .workingDir }}
+          {{- end }}
+          {{- if .volumeMounts }}
+          volumeMounts:
+            {{- range .volumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+              {{- if .mountPropagation }}
+              mountPropagation: {{ .mountPropagation }}
+              {{- end }}
+              {{- if .readOnly }}
+              readOnly: {{ .readOnly }}
+              {{- end }}
+              {{- if .recursiveReadOnly }}
+              recursiveReadOnly:  {{ .recursiveReadOnly }}
+              {{- end }}
+              {{- if .subPath }}
+              subPath: {{ .subPath }}
+              {{- end }}
+              {{- if .subPathExpr }}
+              subPathExpr: {{ .subPathExpr }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- if or .resources.requests.enabled .resources.limits.enabled }}
+          resources:
+            {{- if .resources.requests.enabled }}
+            requests:
+              {{- if .resources.requests.memory }}
+              memory: {{ .resources.requests.memory }}
+              {{- end }}
+              {{- if .resources.requests.cpu }}
+              cpu: {{ .resources.requests.cpu }}
+              {{- end }}
+            {{- end }}
+            {{- if .resources.limits.enabled }}
+            limits:
+              {{- if .resources.limits.memory }}
+              memory: {{ .resources.limits.memory }}
+              {{- end }}
+              {{- if .resources.limits.cpu }}
+              cpu: {{ .resources.limits.cpu }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+        {{- end }}
+      {{- end }}
+      {{- if or $app.spc.enabled $app.pv.enabled $app.ro.template.poSpec.volumes }}
+      volumes:
+        {{- if $app.spc.enabled }}
+        - name: {{ $.Values.domainCode }}-{{ $app.name }}-spc
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ $.Values.domainCode }}-{{ $app.name }}-spc
+        {{- end }}
+        {{- if $app.pv.enabled }}
+        - name: {{ $.Values.domainCode }}-{{ $app.name }}-static-pv
+          persistentVolumeClaim:
+            claimName: {{ $.Values.domainCode }}-{{ $app.name }}-static-pvc
+            {{- if $app.pv.fileMount.readOnly }}
+            readOnly: true
+            {{- end }}
+        {{- end }}
+        {{- if $app.ro.template.poSpec.volumes }}
+        {{- range $app.ro.template.poSpec.volumes }}
+        - name: {{ .name }}
+          {{- if eq .type "emptyDir" }}
+          emptyDir:
+            {{- if .emptyDir.medium }}
+            medium: {{ .emptyDir.medium }}
+            {{- end }}
+            {{- if .emptyDir.sizeLimit }}
+            sizeLimit: {{ .emptyDir.sizeLimit }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+        {{- end }}
+      {{- end }}
+---
+{{- end -}}
+{{- end -}}
+{{- end -}}

@@ -1,0 +1,21 @@
+apiVersion: v2
+name: ddd-helm
+version: 1.4.0
+kubeVersion: ">= 1.24.0-0"
+description: A Helm chart based on DDD(Domain Driven Development) architecture.
+type: application
+keywords:
+  - DDD
+  - ddd
+# home: ""
+# sources:
+  # - 
+# dependencies: []
+maintainers:
+  - name: pyo_counting
+    email: pyo_counting@kakao.com
+    url: https://github.com/pyo-counting/ddd-helm
+# icon:
+# appVersion:
+deprecated: false
+# annotations: {}

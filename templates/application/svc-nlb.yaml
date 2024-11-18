@@ -1,0 +1,141 @@
+{{- if .Values.common.ns.enabled }}
+{{- range $app := .Values.application -}}
+{{- if and $app.svc.enabled $app.ro.enabled $app.ro.template.poSpec.container.ports -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $.Values.domainCode }}-{{ $app.name }}-nlb-svc
+  namespace: {{ include "ddd-helm.namespace" $ }}
+  labels:
+    {{- include "ddd-helm.commonLabels" $ | nindent 4 }}
+    {{- include "ddd-helm.componentLabel" $app | nindent 4 }}
+    {{- if $app.svc.labelsTemplate }}
+    {{- tpl $app.svc.labelsTemplate $ | nindent 4 }}
+    {{- end }}
+    {{- if $app.svc.labels }}
+    {{- toYaml $app.svc.labels | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- if $app.svc.annotationsTemplate }}
+    {{- tpl $app.svc.annotationsTemplate $ | nindent 4 }}
+    {{- end }}
+    {{- if $app.svc.annotations }}
+    {{- toYaml $app.svc.annotations | nindent 4 }}
+    {{- end }}
+    service.beta.kubernetes.io/aws-load-balancer-name: {{ $app.svc.nlb.name }}
+    service.beta.kubernetes.io/aws-load-balancer-type: external
+    service.beta.kubernetes.io/aws-load-balancer-scheme: {{ $app.svc.nlb.scheme }}
+    {{- if $app.svc.nlb.attributes }}
+    service.beta.kubernetes.io/aws-load-balancer-attributes: {{ $app.svc.nlb.attributes }}
+    {{- end }}
+    {{- if $app.svc.nlb.tags }}
+    service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: {{ $app.svc.nlb.tags }}
+    {{- end }}
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: {{ $app.svc.nlb.target.type }}
+    {{- if and (eq $app.svc.nlb.target.type "instance") $app.svc.nlb.target.nodeLabels }}
+    service.beta.kubernetes.io/aws-load-balancer-target-node-labels: {{ $app.svc.nlb.target.nodeLabels }}
+    {{- end }}
+    {{- if $app.svc.nlb.target.attributes }}
+    service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: {{ $app.svc.nlb.target.attributes }}
+    {{- end }}
+    {{- if $app.svc.nlb.ip.subnets }}
+    service.beta.kubernetes.io/aws-load-balancer-subnets: {{ $app.svc.nlb.ip.subnets }}
+    {{- end }}
+    service.beta.kubernetes.io/aws-load-balancer-ip-address-type: {{ $app.svc.nlb.ip.type }}
+    {{- if and (eq $app.svc.nlb.ip.type "dualstack") $app.svc.nlb.ip.ipv6List }}
+    service.beta.kubernetes.io/aws-load-balancer-ipv6-addresses: {{ $app.svc.nlb.ip.ipv6List }}
+    {{- end }}
+    {{- if and (eq $app.svc.nlb.scheme "internal") $app.svc.nlb.ip.ipv4List }}
+    service.beta.kubernetes.io/aws-load-balancer-private-ipv4-addresses: {{ $app.svc.nlb.ip.ipv4List }}
+    {{- else if and (eq $app.svc.nlb.scheme "ineternet-facing") $app.svc.nlb.ip.eIP }}
+    service.beta.kubernetes.io/aws-load-balancer-eip-allocations: {{ $app.svc.nlb.ip.eIP }}
+    {{- end }}
+    {{- if $app.svc.nlb.ip.frontendSecurityGroups }}
+    service.beta.kubernetes.io/aws-load-balancer-security-groups: {{ $app.svc.nlb.ip.frontendSecurityGroups }}
+    {{- end }}
+    {{- if $app.svc.nlb.ip.securityGroupsManaged }}
+    service.beta.kubernetes.io/aws-load-balancer-manage-backend-security-group-rules: {{ $app.svc.nlb.ip.securityGroupsManaged | quote }}
+    {{- end }}
+    {{- if $app.svc.nlb.tls.enabled }}
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: {{ $app.svc.nlb.tls.certARN }}
+    {{- if $app.svc.nlb.tls.ports }}
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: {{ $app.svc.nlb.tls.ports | quote }}
+    {{- end }}
+    {{- if $app.svc.nlb.tls.negotiationPolicy }}
+    service.beta.kubernetes.io/aws-load-balancer-ssl-negotiation-policy: {{ $app.svc.nlb.tls.negotiationPolicy }}
+    {{- end }}
+    {{- if $app.svc.nlb.tls.backendProtocol }}
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: {{ $app.svc.nlb.tls.backendProtocol }}
+    {{- end }}
+    {{- if $app.svc.nlb.tls.alpnPolicy }}
+    service.beta.kubernetes.io/aws-load-balancer-alpn-policy: {{ $app.svc.nlb.tls.alpnPolicy }}
+    {{- end }}
+    {{- end }}
+    {{- if $app.svc.nlb.healthCheck.protocol }}
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-protocol: {{ $app.svc.nlb.healthCheck.protocol }}
+    {{- if and (mustRegexMatch "^http" $app.svc.nlb.healthCheck.protocol) }}
+    {{- if $app.svc.nlb.healthCheck.path }}
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: {{ $app.svc.nlb.healthCheck.path }}
+    {{- end }}
+    {{- if $app.svc.nlb.healthCheck.successCode }}
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-success-codes: {{ $app.svc.nlb.healthCheck.successCode | quote }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
+    {{- if $app.svc.nlb.healthCheck.port }}
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-port: {{ $app.svc.nlb.healthCheck.port | quote }}
+    {{- end }}
+    {{- if $app.svc.nlb.healthCheck.healthyThreshold }}
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-healthy-threshold: {{ $app.svc.nlb.healthCheck.healthyThreshold | quote }}
+    {{- end }}
+    {{- if $app.svc.nlb.healthCheck.unhealthyThreshold }}
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-unhealthy-threshold:  {{ $app.svc.nlb.healthCheck.unhealthyThreshold | quote }}
+    {{- end }}
+    {{- if $app.svc.nlb.healthCheck.interval }}
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-interval:  {{ $app.svc.nlb.healthCheck.interval | quote }}
+    {{- end }}
+    # {{- if $app.svc.nlb.healthCheck.timeout }}
+    # service.beta.kubernetes.io/aws-load-balancer-healthcheck-timeout:
+    # {{- end }}
+spec:
+  type: LoadBalancer
+  selector:
+    {{ include "ddd-helm.componentLabel" $app }}
+  ports:
+    {{- range $app.ro.template.poSpec.container.ports }}
+    {{- if eq .name $app.svc.targetPortName }}
+    - name: {{ .name }}
+      protocol: {{ .protocol }}
+      port: {{ .containerPort }}
+      targetPort: {{ .containerPort }}
+    {{- end }}
+    {{- end }}
+  {{- if $app.svc.externalIPs }}
+  externalIPs:
+    {{- toYaml $app.svc.externalIPs | nindent 4 }}
+  {{- end }}
+  {{- if $app.svc.sessionAffinity.type }}
+  sessionAffinity: {{ $app.svc.sessionAffinity.type }}
+  {{- if and (eq $app.svc.sessionAffinity.type "ClientIP") $app.svc.sessionAffinity.timeoutSeconds }}
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: {{ $app.svc.sessionAffinity.timeoutSeconds }}
+  {{- end }}
+  {{- end }}
+  {{- if $app.svc.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ $app.svc.externalTrafficPolicy }}
+  {{- end }}
+  {{- if $app.svc.internalTrafficPolicy }}
+  internalTrafficPolicy: {{ $app.svc.internalTrafficPolicy }}
+  {{- end }}
+  {{- if $app.svc.nlb.ip.sourceRanges }}
+  loadBalancerSourceRanges:
+    {{- toYaml $app.svc.nlb.ip.sourceRanges | nindent 4 }}
+  {{- end }}
+  {{- if $app.svc.allocateLoadBalancerNodePorts }}
+  allocateLoadBalancerNodePorts: {{ $app.svc.allocateLoadBalancerNodePorts }}
+  {{- end }}
+---
+{{- end -}}
+{{- end -}}
+{{- end -}}

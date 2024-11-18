@@ -1,0 +1,39 @@
+{{- if .Values.common.ns.enabled }}
+{{- range $app := .Values.application -}}
+{{- if $app.cm.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $.Values.domainCode }}-{{ $app.name }}-cm
+  namespace: {{ include "ddd-helm.namespace" $ }}
+  labels:
+    {{- include "ddd-helm.commonLabels" $ | nindent 4 }}
+    {{- include "ddd-helm.componentLabel" $app | nindent 4 }}
+    {{- if $app.cm.labelsTemplate }}
+    {{- tpl $app.cm.labelsTemplate $ | nindent 4 }}
+    {{- end }}
+    {{- if $app.cm.labels }}
+    {{- toYaml $app.cm.labels | nindent 4 }}
+    {{- end }}
+  {{- if or $app.cm.annotationsTemplate $app.cm.annotations }}
+  annotations:
+    {{- if $app.cm.annotationsTemplate }}
+    {{- tpl $app.cm.annotationsTemplate $ | nindent 4 }}
+    {{- end }}
+    {{- if $app.cm.annotations }}
+    {{- toYaml $app.cm.annotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
+{{- if $app.cm.dataTemplate }}
+data:
+  {{- tpl $app.cm.dataTemplate $ | nindent 2 }}
+{{- end }}
+{{- if $app.cm.binaryDataTemplate }}
+binaryData:
+  {{- tpl $app.cm.binaryDataTemplate $ | nindent 2 }}
+{{- end }}
+immutable: false
+---
+{{- end -}}
+{{- end -}}
+{{- end -}}

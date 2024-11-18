@@ -1,0 +1,38 @@
+{{- if .Values.common.ns.enabled }}
+{{- if .Values.common.sec.enabled }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .Values.domainCode }}-sec
+  namespace: {{ include "ddd-helm.namespace" . }}
+  labels:
+    {{- include "ddd-helm.commonLabels" . | nindent 4 }}
+    {{- if .Values.common.sec.labelsTemplate }}
+    {{- tpl .Values.common.sec.labelsTemplate . | nindent 4 }}
+    {{- end }}
+    {{- if .Values.common.sec.labels }}
+    {{- toYaml .Values.common.sec.labels . | nindent 4 }}
+    {{- end }}
+  {{- if or .Values.common.sec.annotationsTemplate .Values.common.sec.annotations }}
+  annotations:
+    {{- if .Values.common.sec.annotationsTemplate }}
+    {{- tpl .Values.common.sec.annotationsTemplate . | nindent 4 }}
+    {{- end }}
+    {{- if .Values.common.sec.annotations }}
+    {{- toYaml .Values.common.sec.annotations . | nindent 4 }}
+    {{- end }}
+  {{- end }}
+{{- if .Values.common.sec.dataTemplate }}
+data:
+  {{- tpl .Values.common.sec.dataTemplate . | nindent 2 }}
+{{- end }}
+{{- if .Values.common.sec.stringDataTemplate }}
+stringData:
+  {{- tpl .Values.common.sec.stringDataTemplate . | nindent 2 }}
+{{- end }}
+{{- if .Values.common.sec.type }}
+type: {{ .Values.common.sec.type }}
+{{- end }}
+immutable: false
+{{- end -}}
+{{- end -}}

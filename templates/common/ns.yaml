@@ -1,0 +1,23 @@
+{{- if .Values.common.ns.enabled }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.domainCode }}-ns
+  labels:
+    {{- include "ddd-helm.commonLabels" . | nindent 4 }}
+    {{- if .Values.common.ns.labelsTemplate }}
+    {{- tpl .Values.common.ns.labelsTemplate . | nindent 4 }}
+    {{- end }}
+    {{- if .Values.common.ns.labels }}
+    {{- toYaml .Values.common.ns.labels . | nindent 4 }}
+    {{- end }}
+  {{- if or .Values.common.ns.annotationsTemplate .Values.common.ns.annotations }}
+  annotations:
+    {{- if .Values.common.ns.annotationsTemplate }}
+    {{- tpl .Values.common.ns.annotationsTemplate . | nindent 4 }}
+    {{- end }}
+    {{- if .Values.common.ns.annotations }}
+    {{- toYaml .Values.common.ns.annotations . | nindent 4 }}
+    {{- end }}
+  {{- end }}
+{{- end -}}

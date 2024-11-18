@@ -1,0 +1,150 @@
+{{- if .Values.common.ns.enabled }}
+{{- range $app := .Values.application -}}
+{{- if $app.ing.private.enabled -}}
+{{- range $idx, $_ := $app.ing.private.target -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $.Values.domainCode }}-{{ $app.name }}-pri-ing-{{ .order }}
+  namespace: {{ include "ddd-helm.namespace" $ }}
+  labels:
+    {{- include "ddd-helm.commonLabels" $ | nindent 4 }}
+    {{- include "ddd-helm.componentLabel" $app | nindent 4 }}
+    {{- if $app.ing.private.labelsTemplate }}
+    {{- tpl $app.ing.private.labelsTemplate $ | nindent 4 }}
+    {{- end }}
+    {{- if $app.ing.private.labels }}
+    {{- toYaml $app.ing.private.labels | nindent 4 }}
+    {{- end }}
+  annotations:
+    {{- if $app.ing.private.annotationsTemplate }}
+    {{- tpl $app.ing.private.annotationsTemplate $ | nindent 4 }}
+    {{- end }}
+    {{- if $app.ing.private.annotations }}
+    {{- toYaml $app.ing.private.annotations | nindent 4 }}
+    {{- end }}
+    alb.ingress.kubernetes.io/group.name: {{ $app.ing.private.name }}
+    alb.ingress.kubernetes.io/load-balancer-name: {{ $app.ing.private.name }}
+    alb.ingress.kubernetes.io/scheme: "internal"
+    {{- if $app.ing.private.listener.ports }}
+    alb.ingress.kubernetes.io/listen-ports: {{ toJson $app.ing.private.listener.ports | quote }}
+    {{- end }}
+    {{- if $app.ing.private.listener.tls.enabled }}
+    alb.ingress.kubernetes.io/certificate-arn: {{ $app.ing.private.listener.tls.certARN }}
+    alb.ingress.kubernetes.io/ssl-policy: {{ $app.ing.private.listener.tls.policy }}
+    {{- if $app.ing.private.listener.tls.redirectPort }}
+    alb.ingress.kubernetes.io/ssl-redirect: {{ $app.ing.private.listener.tls.redirectPort | quote }}
+    {{- end }}
+    {{- end }}
+    {{- range $key, $value := $app.ing.private.actions }}
+    alb.ingress.kubernetes.io/actions.{{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- range $key, $value := $app.ing.private.conditions }}
+    alb.ingress.kubernetes.io/conditions.{{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- if $app.ing.private.attributes }}
+    alb.ingress.kubernetes.io/load-balancer-attributes: {{ $app.ing.private.attributes }}
+    {{- end }}
+    {{- if $app.ing.private.ip.type }}
+    alb.ingress.kubernetes.io/ip-address-type: {{ $app.ing.private.ip.type }}
+    {{- end }}
+    {{- if $app.ing.private.ip.ipv4Pool }}
+    alb.ingress.kubernetes.io/customer-owned-ipv4-pool: {{ $app.ing.private.ip.ipv4Pool }}
+    {{- end }}
+    {{- if $app.ing.private.ip.subnets }}
+    alb.ingress.kubernetes.io/subnets: {{ $app.ing.private.ip.subnets }}
+    {{- end }}
+    {{- if $app.ing.private.ip.sourceRanges }}
+    alb.ingress.kubernetes.io/inbound-cidrs: {{ $app.ing.private.ip.sourceRanges }}
+    {{- end }}
+    {{- if $app.ing.private.ip.frontendSecurityGroups }}
+    alb.ingress.kubernetes.io/security-groups: {{ $app.ing.private.ip.frontendSecurityGroups }}
+    {{- end }}
+    {{- if $app.ing.private.ip.backendSecurityGroupManaged }}
+    alb.ingress.kubernetes.io/manage-backend-security-group-rules: {{ $app.ing.private.ip.backendSecurityGroupManaged | quote }}
+    {{- end }}
+    {{- if $app.ing.private.tags }}
+    alb.ingress.kubernetes.io/tags: {{ $app.ing.private.tags }}
+    {{- end }}
+    {{- if $app.ing.private.wafAclID }}
+    alb.ingress.kubernetes.io/waf-acl-id: {{ $app.ing.private.wafAclID }}
+    {{- end }}
+    {{- if $app.ing.private.wafv2AclID  }}
+    alb.ingress.kubernetes.io/wafv2-acl-arn: {{ $app.ing.private.wafv2AclID }}
+    {{- end }}
+    {{- if $app.ing.private.shieldAdvancedProtection }}
+    alb.ingress.kubernetes.io/shield-advanced-protection: {{ $app.ing.private.shieldAdvancedProtection }}
+    {{- end }}
+    alb.ingress.kubernetes.io/group.order: {{ .order | quote }}
+    {{- if .type }}
+    alb.ingress.kubernetes.io/target-type: {{ .type }}
+    {{- end }}
+    {{- if and (eq .type "instance") .nodeLabels }}
+    alb.ingress.kubernetes.io/target-node-labels: {{ .nodeLabels }}
+    {{- end }}
+    {{- if .protocol }}
+    alb.ingress.kubernetes.io/backend-protocol: {{ .protocol }}
+    {{- end }}
+    {{- if .protocolVersion }}
+    alb.ingress.kubernetes.io/backend-protocol-version: {{ .protocolVersion }}
+    {{- end }}
+    {{- if .attributes }}
+    alb.ingress.kubernetes.io/target-group-attributes: {{ .attributes }}
+    {{- end }}
+    {{- if .healthCheck.protocol }}
+    alb.ingress.kubernetes.io/healthcheck-protocol: {{ .healthCheck.protocol }}
+    {{- end }}
+    {{- if .healthCheck.port }}
+    alb.ingress.kubernetes.io/healthcheck-port: {{ .healthCheck.port | quote }}
+    {{- end }}
+    {{- if .healthCheck.path }}
+    alb.ingress.kubernetes.io/healthcheck-path: {{ .healthCheck.path }}
+    {{- end }}
+    {{- if .healthCheck.interval }}
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: {{ .healthCheck.interval | quote }}
+    {{- end }}
+    {{- if .healthCheck.timeout }}
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: {{ .healthCheck.timeout | quote }}
+    {{- end }}
+    {{- if .healthCheck.successCode }}
+    alb.ingress.kubernetes.io/success-codes: {{ .healthCheck.successCode | quote }}
+    {{- end }}
+    {{- if .healthCheck.healthyThreshold }}
+    alb.ingress.kubernetes.io/healthy-threshold-count: {{ .healthCheck.healthyThreshold | quote }}
+    {{- end }}
+    {{- if .healthCheck.unhealthyThreshold }}
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: {{ .healthCheck.unhealthyThreshold | quote }}
+    {{- end }}
+spec:
+  {{- if $app.ing.private.className }}
+  ingressClassName: {{ $app.ing.private.className }}
+  {{- end }}
+  {{- if and (eq $idx 0) $app.ing.private.defaultRule.enabled }}
+  defaultBackend:
+    service:
+      name: {{ $app.ing.private.defaultRule.svc.name }}
+      port:
+        name: {{ $app.ing.private.defaultRule.svc.portName }}
+  {{- end }}
+  rules:
+    {{- range .rules }}
+    - http:
+        paths:
+          {{- range .paths }}
+          - pathType: {{ .type }}
+            path: {{ .path | quote }}
+            backend:
+              service:
+                name: {{ .svc.name }}
+                port:
+                  name: {{ .svc.portName }}
+          {{- end }}
+      {{- if .host }}
+      host: {{ .host | quote }}
+      {{- end }}
+    {{- end }}
+---
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}

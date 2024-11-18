@@ -1,0 +1,36 @@
+{{- if .Values.common.ns.enabled }}
+{{- range $app := .Values.application -}}
+{{- if $app.hpa.enabled -}}
+{{- range $app.hpa.metrics -}}
+{{- if and (eq .type "External") .metric.crd.enabled (eq .metric.crd.type "DatadogMetric") -}}
+apiVersion: datadoghq.com/v1alpha1
+kind: DatadogMetric
+metadata:
+  name: {{ $.Values.domainCode }}-{{ $app.name }}-dm-{{ .metric.crd.order }}
+  namespace: {{ include "ddd-helm.namespace" $ }}
+  labels:
+    {{- include "ddd-helm.commonLabels" $ | nindent 4 }}
+    {{- include "ddd-helm.componentLabel" $app | nindent 4 }}
+    {{- if .metric.crd.labelsTemplate }}
+    {{- tpl .metric.crd.labelsTemplate $ | nindent 4 }}
+    {{- end }}
+    {{- if .metric.crd.labels }}
+    {{- toYaml .metric.crd.labels | nindent 4 }}
+    {{- end }}
+  {{- if or .metric.crd.annotationsTemplate .metric.crd.annotations }}
+  annotations:
+    {{- if .metric.crd.annotationsTemplate }}
+    {{- tpl .metric.crd.annotationsTemplate $ | nindent 4 }}
+    {{- end }}
+    {{- if .metric.crd.annotations }}
+    {{- toYaml .metric.crd.annotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
+spec:
+  query: {{ .metric.query }}
+---
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}

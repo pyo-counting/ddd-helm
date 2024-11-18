@@ -1,0 +1,27 @@
+{{- if .Values.common.ns.enabled }}
+{{- range $app := .Values.application -}}
+{{- if and $app.ro.enabled $app.ro.template.poSpec.container.ports -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $.Values.domainCode }}-{{ $app.name }}-update-svc
+  namespace: {{ include "ddd-helm.namespace" $ }}
+  labels:
+    {{- include "ddd-helm.commonLabels" $ | nindent 4 }}
+    {{- include "ddd-helm.componentLabel" $app | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{ include "ddd-helm.componentLabel" $app }}
+  ports:
+    {{- range $app.ro.template.poSpec.container.ports }}
+    - name: {{ .name }}
+      protocol: {{ .protocol }}
+      port: {{ .containerPort }}
+      targetPort: {{ .containerPort }}
+    {{- end }}
+  internalTrafficPolicy: Cluster
+---
+{{- end -}}
+{{- end -}}
+{{- end -}}

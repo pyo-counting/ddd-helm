@@ -1,0 +1,87 @@
+{{- if .Values.common.ns.enabled }}
+{{- range $app := .Values.application -}}
+{{- if $app.spc.enabled -}}
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: {{ $.Values.domainCode }}-{{ $app.name }}-spc
+  namespace: {{ include "ddd-helm.namespace" $ }}
+  labels:
+    {{- include "ddd-helm.commonLabels" $ | nindent 4 }}
+    {{- include "ddd-helm.componentLabel" $app | nindent 4 }}
+    {{- if $app.spc.labelsTemplate }}
+    {{- tpl $app.spc.labelsTemplate $ | nindent 4 }}
+    {{- end }}
+    {{- if $app.spc.labels }}
+    {{- toYaml $app.spc.labels | nindent 4 }}
+    {{- end }}
+  {{- if or $app.spc.annotationsTemplate $app.spc.annotations }}
+  annotations:
+    {{- if $app.spc.annotationsTemplate }}
+    {{- tpl $app.spc.annotationsTemplate $ | nindent 4 }}
+    {{- end }}
+    {{- if $app.spc.annotations }}
+    {{- toYaml $app.spc.annotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
+spec:
+  provider: aws
+  parameters:
+    {{- if $app.spc.region }}
+    region: {{ $app.spc.region }}
+    {{- end }}
+    {{- if $app.spc.failoverRegion }}
+    failoverRegion: {{ $app.spc.failoverRegion }}
+    {{- end }}
+    {{- if $app.spc.pathTranslation }}
+    pathTranslation: {{ $app.spc.pathTranslation }}
+    {{- end }}
+    objects: |
+      - objectName: {{ $app.spc.object.name | quote }}
+        {{- if $app.spc.failoverObject }}
+        failoverObject:
+          - objectName: {{ $app.spc.failoverObject | quote }}
+        {{- end }}
+        objectType: {{ $app.spc.object.type | quote }}
+        {{- if $app.spc.object.alias }}
+        objectAlias: {{ $app.spc.object.alias | quote }}
+        {{- end }}
+        jmesPath:
+          {{- range $path, $alias := $app.spc.object.jmesPath }}
+          - path: '{{ $path | quote }}'
+            objectAlias: {{ $alias | quote }}
+          {{- end }}
+  {{- if $app.spc.sec.enabled }}
+  secretObjects:
+    - secretName: {{ $.Values.domainCode }}-{{ $app.name }}-sec
+      {{- if $app.spc.sec.type }}
+      type: {{ $app.spc.sec.type }}
+      {{- end }}
+      {{- if or $app.spc.labelsTemplate $app.spc.labels }}
+      labels:
+        {{- if $app.spc.labelsTemplate }}
+        {{- tpl $app.spc.labelsTemplate $ | nindent 8 }}
+        {{- end }}
+        {{- if $app.spc.labels }}
+        {{- toYaml $app.spc.labels | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- if or $app.spc.annotationsTemplate $app.spc.annotations }}
+      annotations:
+        {{- if $app.spc.annotationsTemplate }}
+        {{- tpl $app.spc.annotationsTemplate $ | nindent 8 }}
+        {{- end }}
+        {{- if $app.spc.annotations }}
+        {{- toYaml $app.spc.annotations | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      data:
+        {{- range $alias, $key := $app.spc.sec.mapping }}
+        - objectName: {{ $alias }}
+          key: {{ $key }}
+        {{- end }}
+  {{- end }}
+---
+{{- end -}}
+{{- end -}}
+{{- end -}}
