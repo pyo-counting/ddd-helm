@@ -209,7 +209,11 @@ spec:
         tags.datadoghq.com/service: {{ $.Values.domainCode }}-{{ $app.name }}
         tags.datadoghq.com/version: {{ $app.ro.template.poSpec.container.image.tag }}
         admission.datadoghq.com/enabled: "true"
+        {{- if $app.ro.datadog.configMode }}
+        admission.datadoghq.com/config.mode: {{ $app.ro.datadog.configMode }}
+        {{- else }}
         admission.datadoghq.com/config.mode: "socket"
+        {{- end }}
         {{- end }}
         {{- if $app.ro.labelsTemplate }}
         {{- tpl $app.ro.labelsTemplate $ | nindent 8 }}
@@ -232,6 +236,21 @@ spec:
     spec:
       {{- if $app.ro.template.poSpec.enableServiceLinks }}
       enableServiceLinks: {{ $app.ro.template.poSpec.enableServiceLinks }}
+      {{- end }}
+      {{- if $app.ro.template.poSpec.nodeSelector }}
+      {{- include "ddd-helm.po.nodeSelector" $app.ro.template.poSpec.nodeSelector | nindent 6 }}
+      {{- end }}
+      {{- if $app.ro.template.poSpec.affinity }}
+      {{- include "ddd-helm.po.affinity" $app.ro.template.poSpec.affinity | nindent 6 }}
+      {{- end }}
+      {{- if $app.ro.template.poSpec.tolerations }}
+      {{- include "ddd-helm.po.tolerations" $app.ro.template.poSpec.tolerations | nindent 6 }}
+      {{- end }}
+      {{- if $app.ro.template.poSpec.priorityClassName }}
+      {{- include "ddd-helm.po.priorityClassName" $app.ro.template.poSpec.priorityClassName | nindent 6 }}
+      {{- end }}
+      {{- if $app.ro.template.poSpec.topologySpreadConstraints }}
+      {{- include "ddd-helm.po.topologySpreadConstraints" (dict "name" $app.name "topologySpreadConstraints" $app.ro.template.poSpec.topologySpreadConstraints) | nindent 6 }}
       {{- end }}
       {{- if $app.ro.template.poSpec.restartPolicy }}
       restartPolicy: {{ $app.ro.template.poSpec.restartPolicy }}

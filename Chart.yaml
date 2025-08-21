@@ -1,6 +1,6 @@
 apiVersion: v2
 name: ddd-helm
-version: 1.4.0
+version: 1.8.3
 kubeVersion: ">= 1.24.0-0"
 description: A Helm chart based on DDD(Domain Driven Development) architecture.
 type: application
@@ -9,7 +9,7 @@ keywords:
   - ddd
 # home: ""
 # sources:
-  # - 
+# -
 # dependencies: []
 maintainers:
   - name: pyo_counting

@@ -102,21 +102,49 @@ spec:
       {{- end }}
     {{- end }}
     # pod(main, init, wait container) config
+    {{- if $cwf.workflow.spec.nodeSelector }}
+    {{- include "ddd-helm.po.nodeSelector" $cwf.workflow.spec.nodeSelector | nindent 4 }}
+    {{- end }}
+    {{- if $cwf.workflow.spec.affinity }}
+    {{- include "ddd-helm.po.affinity" $cwf.workflow.spec.affinity | nindent 4 }}
+    {{- end }}
+    {{- if $cwf.workflow.spec.tolerations }}
+    {{- include "ddd-helm.po.tolerations" $cwf.workflow.spec.tolerations | nindent 4 }}
+    {{- end }}
+    {{- if $cwf.workflow.spec.podPriorityClassName }}
+    {{- include "ddd-helm.wf.podPriorityClassName" $cwf.workflow.spec.podPriorityClassName | nindent 4 }}
+    {{- end }}
+    {{- if $cwf.workflow.spec.podDisruptionBudget }}
+    podDisruptionBudget:
+      {{- if $cwf.workflow.spec.podDisruptionBudget.maxUnavailable }}
+      maxUnavailable: {{ $cwf.workflow.spec.podDisruptionBudget.maxUnavailable }}
+      {{- end }}
+      {{- if $cwf.workflow.spec.podDisruptionBudget.minAvailable }}
+      minAvailable: {{ $cwf.workflow.spec.podDisruptionBudget.minAvailable }}
+      {{- end }}
+      {{- if $cwf.workflow.spec.podDisruptionBudget.selector }}
+      selector:
+        {{- if $cwf.workflow.spec.podDisruptionBudget.selector.matchExpressions }}
+        matchExpressions:
+          {{- toYaml $cwf.workflow.spec.podDisruptionBudget.selector.matchExpressions | nindent 10 }}
+        {{- end }}
+        {{- if $cwf.workflow.spec.podDisruptionBudget.selector.matchLabels }}
+        matchLabels:
+          {{- toYaml $cwf.workflow.spec.podDisruptionBudget.selector.matchLabels | nindent 10 }}
+        {{- end }}
+      {{- end }}
+      {{- if $cwf.workflow.spec.podDisruptionBudget.unhealthyPodEvictionPolicy }}
+      unhealthyPodEvictionPolicy: {{ $cwf.workflow.spec.podDisruptionBudget.unhealthyPodEvictionPolicy | quote }}
+      {{- end }}
+    {{- end }}
     automountServiceAccountToken: false
     serviceAccountName: {{ $.Values.domainCode }}-sa
     executor:
       serviceAccountName: {{ $.Values.domainCode }}-sa
     {{- include "ddd-helm.po.securityContext" $cwf.workflow.spec.securityContext | nindent 4 }}
-    # affinity:
-    {{- if $cwf.workflow.spec.nodeSelector }}
-    nodeSelector:
-      {{- toYaml $cwf.workflow.spec.nodeSelector | nindent 6 }}
-    {{- end }}
-    # tolerations:
     {{- if $cwf.workflow.spec.parallelism }}
     parallelism: {{ $cwf.workflow.spec.parallelism }}
     {{- end }}
-    # podDisruptionBudget:
     {{- if $cwf.workflow.spec.podGC }}
     podGC:
       {{- if $cwf.workflow.spec.podGC.deleteDelayDuration }}
@@ -158,25 +186,24 @@ spec:
         {{- end }}
       {{- end }}
     {{- end }}
-    # podPriorityClassName:
     {{- if $cwf.workflow.spec.podSpecPatch }}
     podSpecPatch:
       {{- toYaml $cwf.workflow.spec.podSpecPatch | nindent 6 }}
     {{- end }}
     # workflow config
     {{- if $cwf.workflow.spec.metrics }}
-    {{- include "ddd-helm.cwf.metrics" $cwf.workflow.spec.metrics | nindent 4 }}
+    {{- include "ddd-helm.wf.metrics" $cwf.workflow.spec.metrics | nindent 4 }}
     {{- end }}
     {{- if $cwf.workflow.spec.arguments }}
     arguments:
       # artifacts:
       {{- if $cwf.workflow.spec.arguments.parameters }}
-      {{- include "ddd-helm.cwf.parameters" $cwf.workflow.spec.arguments.parameters | nindent 6 }}
+      {{- include "ddd-helm.wf.parameters" $cwf.workflow.spec.arguments.parameters | nindent 6 }}
       {{- end }}
     {{- end }}
     entrypoint: {{ $cwf.workflow.spec.entrypoint | quote }}
     {{- if $cwf.workflow.spec.hooks }}
-    {{- include "ddd-helm.cwf.hooks" $cwf.workflow.spec.hooks | nindent 4 }}
+    {{- include "ddd-helm.wf.hooks" $cwf.workflow.spec.hooks | nindent 4 }}
     {{- end }}
     {{- if $cwf.workflow.spec.onExit }}
     onExit: {{ $cwf.workflow.spec.onExit | quote }}
@@ -245,17 +272,26 @@ spec:
         {{- if .activeDeadlineSeconds }}
         activeDeadlineSeconds: {{ .activeDeadlineSeconds }}
         {{- end }}
+        {{- if .priority }}
+        priority: {{ .priority }}
+        {{- end }}
+        {{- if .nodeSelector }}
+        {{- include "ddd-helm.po.nodeSelector" .nodeSelector | nindent 8 }}
+        {{- end }}
+        {{- if .affinity }}
+        {{- include "ddd-helm.po.affinity" .affinity | nindent 8 }}
+        {{- end }}
+        {{- if .tolerations }}
+        {{- include "ddd-helm.po.tolerations" .tolerations | nindent 8 }}
+        {{- end }}
+        {{- if .podPriorityClassName }}
+        {{- include "ddd-helm.wf.podPriorityClassName" .podPriorityClassName | nindent 8 }}
+        {{- end }}
         automountServiceAccountToken: false
         serviceAccountName: {{ $.Values.domainCode }}-sa
         executor:
           serviceAccountName: {{ $.Values.domainCode }}-sa
         {{- include "ddd-helm.po.securityContext" $cwf.workflow.spec.securityContext | nindent 8 }}
-        # affinity:
-        {{- if .nodeSelector }}
-        nodeSelector:
-          {{- toYaml .nodeSelector | nindent 10 }}
-        {{- end }}
-        # tolerations:
         {{- if .parallelism }}
         parallelism: {{ .parallelism }}
         {{- end }}
@@ -280,8 +316,6 @@ spec:
             {{- end }}
           {{- end }}
         {{- end }}
-        # priorityClassName:
-        # priority:
         {{- if .podSpecPatch }}
         podSpecPatch:
           {{- toYaml .podSpecPatch | nindent 10 }}
@@ -501,10 +535,14 @@ spec:
         # script:
         # {{- else if eq .type "steps" }}
         # steps:
-        # {{- else if eq .type "suspend" }}
-        # suspend:
-        # {{- else if eq .type "plugin" }}
-        # plugin:
+        {{- else if eq .type "suspend" }}
+        suspend:
+          {{- .suspend | default (dict) | toYaml | nindent 10 }}
+        {{- else if eq .type "plugin" }}
+        plugin:
+          {{- if .plugin }}
+          {{- toYaml .plugin | nindent 10 }}
+          {{- end }}
         {{- else if eq .type "dag" }}
         dag:
           {{- if .dag.failFast }}
@@ -532,7 +570,7 @@ spec:
               arguments:
                 # artifacts:
                 {{- if .arguments.parameters }}
-                {{- include "ddd-helm.cwf.parameters" .arguments.parameters | nindent 16 }}
+                {{- include "ddd-helm.wf.parameters" .arguments.parameters | nindent 16 }}
                 {{- end }}
               {{- end }}
               {{- if .withItems }}
@@ -585,7 +623,27 @@ spec:
         # volumes:
       {{- end }}
     {{- end }}
-    # workflowMetadata:
+    {{- if $cwf.workflow.spec.workflowMetadata }}
+    workflowMetadata:
+      {{- if or $cwf.workflow.spec.workflowMetadata.labelsTemplate $cwf.workflow.spec.workflowMetadata.labels }}
+      labels:
+        {{- if $cwf.workflow.spec.workflowMetadata.labelsTemplate }}
+        {{- tpl $cwf.workflow.spec.workflowMetadata.labelsTemplate $ | nindent 8 }}
+        {{- end }}
+        {{- if $cwf.workflow.spec.workflowMetadata.labels }}
+        {{- toYaml $cwf.workflow.spec.workflowMetadata.labels | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- if or $cwf.workflow.spec.workflowMetadata.annotationsTemplate $cwf.workflow.spec.workflowMetadata.annotations }}
+      annotations:
+        {{- if $cwf.workflow.spec.workflowMetadata.annotationsTemplate }}
+        {{- tpl $cwf.workflow.spec.workflowMetadata.annotationsTemplate $ | nindent 8 }}
+        {{- end }}
+        {{- if $cwf.workflow.spec.workflowMetadata.annotations }}
+        {{- toYaml $cwf.workflow.spec.workflowMetadata.annotations | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
     {{- if $cwf.workflow.spec.workflowTemplateRef }}
     workflowTemplateRef:
       {{- if $cwf.workflow.spec.workflowTemplateRef.clusterScope }}

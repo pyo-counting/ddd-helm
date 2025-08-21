@@ -1,4 +1,3 @@
-{{- if .Values.common.ns.enabled }}
 {{- range $app := .Values.application -}}
 {{- if $app.pv.enabled -}}
 apiVersion: v1
@@ -56,6 +55,5 @@ spec:
     readOnly: {{ $app.pv.readOnly }}
     {{- end }}
 ---
-{{- end -}}
 {{- end -}}
 {{- end -}}

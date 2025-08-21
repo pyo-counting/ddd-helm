@@ -1,6 +1,46 @@
 ### TYPE
 - BUGFIX / ENHANCEMENT / FEATURE / CHANGE
 
+## 1.8.3 / 2025-04-02
+- [BUGFIX] Rollout: `topologySpreadConstraints[*].labelSelector.matchLabels` 필드 문법 개선 (`dig` 함수를 사용해 key rotation 체크)
+
+## 1.8.2 / 2025-04-01
+- [BUGFIX] Rollout: `topologySpreadConstraints[*].labelSelector.matchLabels` 필드에 `kurlypay-application.componentLabel` label 항상 적용되도록 if문 삭제
+
+## 1.8.1 / 2025-04-01
+- [ENHANCEMENT] Rollout: `topologySpreadConstraints[*].labelSelector.matchLabels` 필드에 `kurlypay-application.componentLabel` label 추가
+
+## 1.8.0 / 2025-02-18
+- [FEATURE] PriorityClass: 리소스 추가
+    - templates/common/pc.yaml
+    - templates/application/pc.yaml
+- [FEATURE] PodDisruptionBudget: 리소스 추가
+    - template/application/pdb.yaml
+- [FEATURE] Rollout: `nodeSelector`, `affinity`, `tolerations`, `priorityClassName`, `topologySpreadConstraints` 필드 추가
+    - template/application/ro.yaml
+- [FEATURE] CronWorkflow: workflow level `nodeSelector`, `affinity`, `tolerations`, `podPriorityClassName`, `podDisruptionBudget` 필드, template level `priority`, `nodeSelector`, `affinity`, `tolerations`, `podPriorityClassName` 필드 추가
+    - template/application/cwf.yaml
+- [FEATURE] WorkflowTemplate: workflow level `nodeSelector`, `affinity`, `tolerations`, `podPriorityClassName`, `podDisruptionBudget` 필드, template level `priority`, `nodeSelector`, `affinity`, `tolerations`, `podPriorityClassName` 필드 추가
+    - template/application/wf.yaml
+- [BUGFIX] PersistentVolume: non-namespaced 리소스이기 때문에 namespace 활성화 조건 검사 삭제
+    - templates/application/pv-static.yaml
+
+## 1.7.0 / 2025-01-16
+- [FEATURE] CronWorkflow: `suspend`, `plugin` template 타입 추가
+    - templates/application/cwf.yaml
+    - templates/application/wft.yaml
+
+## 1.6.0 / 2024-12-24
+- [FEATURE] Rollout: Datadog admission controller label(`admission.datadoghq.com/config.mode`) 설정 추가
+    - templates/application/ro.yaml
+
+## 1.5.0 / 2024-11-22
+- [FEATURE] WorkflowTemplate: 리소스 추가
+    - templates/application/wft.yaml
+- [ENHANCEMENT] CronWorkflow, WorkflowTemplate: `workflowMetadata` 필드 추가
+    - templates/application/cwf.yaml
+    - templates/application/wft.yaml
+
 ## 1.4.0 / 2024-11-12
 - [FEATURE] CronWorkflow: 리소스 추가
     - templates/application/cwf.yaml
@@ -9,7 +49,6 @@
 ## 1.3.1 / 2024-10-21
 - [BUGFIX] Rollout: datadog label에서 common.environment 변수 사용에 따른 오류
     - templates/application/ro.yaml
-    - values.yaml
 
 ## 1.3.0 / 2024-10-04
 - [FEATURE] RoleBinding: 리소스 추가

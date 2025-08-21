@@ -103,4 +103,4 @@ helm show values oci://${AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-2.amazonaws.com/dd
     - 업데이트에 따른 po의 재시작 기능
         - https://helm.sh/docs/howto/charts_tips_and_tricks/#automatically-roll-deployments
 - CronWorkflow
-    - tempalte 타입 구현: containerSet, resource, data, http, script, steps, suspend, plugin
+    - tempalte 타입 구현: containerSet, resource, data, http, script, steps, plugin
